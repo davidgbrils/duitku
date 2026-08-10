@@ -1,0 +1,40 @@
+/**
+ * Duitku — Environment helpers (TASK-0102).
+ *
+ * Env vars diakses secara lazy (di dalam fungsi), bukan di module scope,
+ * agar `next build` tetap bisa berjalan sebelum .env.local diisi.
+ */
+
+const SUPABASE_URL_MISSING =
+  "Supabase belum dikonfigurasi. Salin .env.example menjadi .env.local dan isi NEXT_PUBLIC_SUPABASE_URL.";
+
+const SUPABASE_KEY_MISSING =
+  "Supabase belum dikonfigurasi. Salin .env.example menjadi .env.local dan isi NEXT_PUBLIC_SUPABASE_ANON_KEY.";
+
+export function isSupabaseConfigured(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
+
+export function getSupabaseEnv(): {
+  url: string;
+  anonKey: string;
+} {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url) {
+    throw new Error(SUPABASE_URL_MISSING);
+  }
+  if (!anonKey) {
+    throw new Error(SUPABASE_KEY_MISSING);
+  }
+
+  return { url, anonKey };
+}
+
+export function getSiteUrl(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+}
