@@ -346,3 +346,26 @@ Web responsive menjadi platform utama.
 ### Konsekuensi
 
 UI harus responsive tetapi tidak ada native Android/iOS application pada fase ini.
+
+---
+
+## ADR-011: Package `shadcn` sebagai Build-Time Dependency
+
+* **Tanggal:** 2026-08-10
+* **Status:** Diterima
+
+### Konteks
+
+Scaffold project menggunakan shadcn/ui versi terbaru (CLI 4.x, preset `base-nova`).
+
+### Keputusan final
+
+Package `shadcn` dipasang pada `dependencies`, bukan `devDependencies`.
+
+### Alasan
+
+`app/globals.css` mengimpor `@import "shadcn/tailwind.css"` (tema preset base-nova), sehingga package diperlukan saat production build — bukan hanya sebagai CLI saat development.
+
+### Konsekuensi
+
+Package `shadcn` tidak boleh dihapus selama preset base-nova digunakan. Alternatif masa depan: meng-inline CSS tema ke dalam project, lalu memindahkan `shadcn` ke `devDependencies`.

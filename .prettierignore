@@ -1,0 +1,6 @@
+# Dokumen SSOT — jangan diformat ulang oleh prettier
+requirements/
+
+# Artefak & lockfiles (prettier v3 sudah mengabaikan lockfile secara default)
+.next/
+node_modules/
