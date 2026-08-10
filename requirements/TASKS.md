@@ -28,17 +28,22 @@ AI suitability:
 
 Tujuan: memahami kode yang sudah ada sebelum menambah feature.
 
-## TASK-0001 — Repository Audit
 
-* [ ] 🤖 Inspect project structure
-* [ ] 🤖 Identify existing routes
-* [ ] 🤖 Identify existing components
-* [ ] 🤖 Identify Supabase configuration
-* [ ] 🤖 Identify database schema
-* [ ] 🤖 Identify authentication implementation
-* [ ] 🤖 Identify existing transaction logic
-* [ ] 🤖 Identify existing wallet logic
-* [ ] 🤖 Identify existing tests
+> **Audit note (2026-08-10):** Repository hanya berisi dokumentasi SSOT; tidak ada codebase MVP sebelumnya. Keputusan developer: scaffold fresh dari nol. Gap terhadap PRD = seluruh implementasi belum ada.
+
+## TASK-0001 — Repository Audit
+> **Audit note (2026-08-10):** Repository hanya berisi dokumentasi SSOT; tidak ada codebase MVP sebelumnya. Keputusan developer: scaffold fresh dari nol. Gap terhadap PRD = seluruh implementasi belum ada.
+
+
+* [x] 🤖 Inspect project structure
+* [x] 🤖 Identify existing routes
+* [x] 🤖 Identify existing components
+* [x] 🤖 Identify Supabase configuration
+* [x] 🤖 Identify database schema
+* [x] 🤖 Identify authentication implementation
+* [x] 🤖 Identify existing transaction logic
+* [x] 🤖 Identify existing wallet logic
+* [x] 🤖 Identify existing tests
 
 ### Acceptance Criteria
 
@@ -56,10 +61,10 @@ None.
 
 ## TASK-0101 — TypeScript & Code Quality
 
-* [ ] 🤖 Enable strict TypeScript
-* [ ] 🤖 Configure lint
-* [ ] 🤖 Remove obvious unsafe types
-* [ ] 🤖 Establish formatting convention
+* [x] 🤖 Enable strict TypeScript
+* [x] 🤖 Configure lint
+* [x] 🤖 Remove obvious unsafe types
+* [x] 🤖 Establish formatting convention
 
 ### Acceptance Criteria
 
@@ -77,9 +82,14 @@ berhasil.
 
 ---
 
-## TASK-0102 — Environment Configuration
 
-* [ ] 🤖 Create `.env.example`
+> **Note (2026-08-10):** `.env.example` dibuat. Validasi env vars menyusul bersama Supabase client (Phase 2). Review secrets handling menunggu developer (👤).
+
+## TASK-0102 — Environment Configuration
+> **Note (2026-08-10):** `.env.example` dibuat. Validasi env vars menyusul bersama Supabase client (Phase 2). Review secrets handling menunggu developer (👤).
+
+
+* [x] 🤖 Create `.env.example`
 * [ ] 🤖 Validate required environment variables
 * [ ] 👤 Review secrets handling
 
