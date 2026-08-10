@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { sanitizeNextPath } from "@/lib/utils/navigation";
 
 /**
  * Callback Supabase Auth — dipakai untuk email confirmation
@@ -9,7 +10,8 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  // Sanitasi `next` untuk mencegah open redirect dari link yang direkayasa.
+  const next = sanitizeNextPath(searchParams.get("next") ?? undefined);
 
   if (code) {
     try {

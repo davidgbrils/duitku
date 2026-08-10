@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { getSiteUrl } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
+import { sanitizeNextPath } from "@/lib/utils/navigation";
 import {
   loginSchema,
   registerSchema,
@@ -16,17 +17,6 @@ export type AuthActionResult = {
   error?: string;
   success?: string;
 };
-
-/**
- * Validasi `next` agar tidak terjadi open redirect.
- * Hanya menerima path internal yang diawali "/" dan bukan "//".
- */
-function sanitizeNextPath(next: string | undefined): string {
-  if (next && next.startsWith("/") && !next.startsWith("//")) {
-    return next;
-  }
-  return "/dashboard";
-}
 
 export async function loginAction(
   input: LoginInput,
@@ -66,6 +56,10 @@ export async function registerAction(
     return { error: parsed.error.issues[0]?.message ?? "Input tidak valid." };
   }
 
+  // redirect() melempar error khusus — HARUS dipanggil di luar try/catch
+  // agar tidak tertelan oleh blok catch (lihat ADR-013 / Next.js docs).
+  let sessionReady = false;
+
   try {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signUp({
@@ -87,20 +81,22 @@ export async function registerAction(
     }
 
     // Jika email confirmation nonaktif, session langsung tersedia.
-    if (data.session) {
-      redirect("/dashboard");
-    }
-
-    return {
-      success:
-        "Registrasi berhasil! Cek email kamu untuk konfirmasi sebelum login.",
-    };
+    sessionReady = Boolean(data.session);
   } catch {
     return {
       error:
         "Layanan autentikasi belum tersedia. Pastikan Supabase sudah dikonfigurasi.",
     };
   }
+
+  if (sessionReady) {
+    redirect("/dashboard");
+  }
+
+  return {
+    success:
+      "Registrasi berhasil! Cek email kamu untuk konfirmasi sebelum login.",
+  };
 }
 
 export async function signOutAction(): Promise<void> {

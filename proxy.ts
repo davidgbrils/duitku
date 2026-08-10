@@ -48,9 +48,17 @@ export async function proxy(request: NextRequest) {
   });
 
   // Verifikasi & refresh session (getUser memvalidasi ke Supabase Auth).
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Jika Supabase tidak reachable, perlakukan sebagai unauthenticated
+  // (fail-open) agar halaman publik tetap bisa diakses.
+  let user = null;
+  try {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    user = authUser;
+  } catch {
+    user = null;
+  }
 
   const isProtected = protectedPrefixes.some((prefix) =>
     pathname.startsWith(prefix)

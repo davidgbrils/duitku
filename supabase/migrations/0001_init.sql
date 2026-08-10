@@ -167,7 +167,13 @@ begin
   values (new.id, coalesce(new.raw_user_meta_data ->> 'display_name', ''))
   on conflict (id) do nothing;
 
-  perform public.seed_default_categories(new.id);
+  -- Kegagalan seed kategori tidak boleh menggagalkan pembuatan akun.
+  begin
+    perform public.seed_default_categories(new.id);
+  exception when others then
+    null;
+  end;
+
   return new;
 end;
 $$;
@@ -207,38 +213,19 @@ create policy "categories_delete_own" on public.categories
 create policy "wallets_select_own" on public.wallets
   for select using (auth.uid() = user_id);
 
-create policy "wallets_insert_own" on public.wallets
-  for insert with check (auth.uid() = user_id);
-
-create policy "wallets_update_own" on public.wallets
-  for update using (auth.uid() = user_id);
-
-create policy "wallets_delete_own" on public.wallets
-  for delete using (auth.uid() = user_id);
-
 create policy "transactions_select_own" on public.transactions
   for select using (auth.uid() = user_id);
-
-create policy "transactions_insert_own" on public.transactions
-  for insert with check (auth.uid() = user_id);
-
-create policy "transactions_update_own" on public.transactions
-  for update using (auth.uid() = user_id);
-
-create policy "transactions_delete_own" on public.transactions
-  for delete using (auth.uid() = user_id);
 
 create policy "transfers_select_own" on public.transfers
   for select using (auth.uid() = user_id);
 
-create policy "transfers_insert_own" on public.transfers
-  for insert with check (auth.uid() = user_id);
-
-create policy "transfers_update_own" on public.transfers
-  for update using (auth.uid() = user_id);
-
-create policy "transfers_delete_own" on public.transfers
-  for delete using (auth.uid() = user_id);
+-- Mutasi wallets/transactions/transfers HANYA lewat RPC (ADR-013):
+-- client tidak boleh INSERT/UPDATE/DELETE langsung, karena itu akan
+-- melewati invariant saldo (dan berpotensi mereferensikan entitas user lain).
+-- Kategori tetap boleh CRUD langsung karena RLS ownership cukup.
+revoke insert, update, delete on public.wallets from authenticated;
+revoke insert, update, delete on public.transactions from authenticated;
+revoke insert, update, delete on public.transfers from authenticated;
 
 -- ============================================================
 -- RPC: operasi finansial atomik (ADR-008)
