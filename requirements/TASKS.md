@@ -102,14 +102,17 @@ Tidak ada secret di repository.
 # PHASE 2 — Authentication
 
 ## TASK-0201 — Authentication Audit
+
+> **Note (2026-08-10):** ✅ Terverifikasi live di Supabase production (project anyocnjgxahwxdunzwjs). Register/Login/Logout/session/protected routes bekerja; email confirmation nonaktif untuk dev.
+
 > **Note (2026-08-10):** Register/Login/Logout/session/protected routes sudah diimplementasi (Supabase Auth + proxy). Verifikasi live menunggu kredensial Supabase (.env.local).
 
 
-* [~] 🤖 Verify Register
-* [~] 🤖 Verify Login
-* [~] 🤖 Verify Logout
-* [~] 🤖 Verify Session
-* [~] 🤖 Verify Protected Routes
+* [x] 🤖 Verify Register
+* [x] 🤖 Verify Login
+* [x] 🤖 Verify Logout
+* [x] 🤖 Verify Session
+* [x] 🤖 Verify Protected Routes
 
 ### Acceptance Criteria
 
@@ -118,12 +121,15 @@ Unauthenticated user tidak dapat mengakses authenticated pages.
 ---
 
 ## TASK-0202 — Authorization
+
+> **Note (2026-08-10):** ✅ Terverifikasi live: RLS isolasi read antar-user (user2 tidak bisa baca data user1) dan proteksi write (insert dengan user_id asing → 403). Cross-user test dengan 2 akun uji.
+
 > **Note (2026-08-10):** RLS policies + ownership check diimplementasi (RLS + RPC security definer). Test cross-user butuh Supabase live + 2 akun uji.
 
 
-* [~] 🤖 Verify user ownership checks
-* [~] 🤖 Verify RLS policies
-* [ ] 🤝 Test cross-user access
+* [x] 🤖 Verify user ownership checks
+* [x] 🤖 Verify RLS policies
+* [x] 🤝 Test cross-user access
 
 ### Acceptance Criteria
 
@@ -168,12 +174,14 @@ Database dapat dibuat dari migration secara repeatable.
 # PHASE 4 — Wallet
 
 ## TASK-0401 — Wallet CRUD
+> **Note (2026-08-10):** Implementasi selesai (RPC create/update/delete_wallet di 0002 + UI /wallets). Verifikasi live menunggu migration 0002 di-apply ke Supabase.
 
-* [ ] 🤖 Create Wallet
-* [ ] 🤖 Read Wallet
-* [ ] 🤖 Update Wallet
-* [ ] 🤖 Deactivate/Delete Wallet
-* [ ] 🤖 Wallet detail
+
+* [~] 🤖 Create Wallet
+* [~] 🤖 Read Wallet
+* [~] 🤖 Update Wallet
+* [~] 🤖 Deactivate/Delete Wallet
+* [~] 🤖 Wallet detail
 
 ### Acceptance Criteria
 
@@ -444,7 +452,7 @@ Critical user journeys pass secara otomatis.
 ## TASK-1201 — Authorization Audit
 
 * [ ] 🤝 Review all user-owned queries
-* [ ] 🤝 Test cross-user access
+* [x] 🤝 Test cross-user access
 * [ ] 🤝 Review RLS
 
 ## TASK-1202 — Input Security

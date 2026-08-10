@@ -196,6 +196,29 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      create_wallet: {
+        Args: {
+          p_name: string;
+          p_type: "cash" | "bank" | "ewallet" | "other";
+          p_currency: string;
+          p_initial_balance: number;
+        };
+        Returns: string;
+      };
+      update_wallet: {
+        Args: {
+          p_wallet_id: string;
+          p_name: string;
+          p_type: "cash" | "bank" | "ewallet" | "other";
+          p_currency: string;
+          p_is_active: boolean;
+        };
+        Returns: undefined;
+      };
+      delete_wallet: {
+        Args: { p_wallet_id: string };
+        Returns: undefined;
+      };
       create_transaction: {
         Args: {
           p_type: "income" | "expense";
