@@ -39,7 +39,7 @@ export function LoginForm({ nextUrl }: { nextUrl?: string }) {
       {error && (
         <p
           role="alert"
-          className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm"
         >
           {error}
         </p>
@@ -56,7 +56,7 @@ export function LoginForm({ nextUrl }: { nextUrl?: string }) {
           {...register("email")}
         />
         {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
+          <p className="text-destructive text-xs">{errors.email.message}</p>
         )}
       </div>
 
@@ -70,7 +70,7 @@ export function LoginForm({ nextUrl }: { nextUrl?: string }) {
           {...register("password")}
         />
         {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
+          <p className="text-destructive text-xs">{errors.password.message}</p>
         )}
       </div>
 

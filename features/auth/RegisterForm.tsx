@@ -9,10 +9,7 @@ import { registerAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  registerSchema,
-  type RegisterInput,
-} from "@/lib/validations/auth";
+import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 
 export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +48,7 @@ export function RegisterForm() {
       {error && (
         <p
           role="alert"
-          className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm"
         >
           {error}
         </p>
@@ -59,7 +56,7 @@ export function RegisterForm() {
       {success && (
         <p
           role="status"
-          className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success"
+          className="bg-success/10 text-success rounded-lg px-3 py-2 text-sm"
         >
           {success}
         </p>
@@ -76,7 +73,7 @@ export function RegisterForm() {
           {...register("displayName")}
         />
         {errors.displayName && (
-          <p className="text-xs text-destructive">
+          <p className="text-destructive text-xs">
             {errors.displayName.message}
           </p>
         )}
@@ -93,7 +90,7 @@ export function RegisterForm() {
           {...register("email")}
         />
         {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
+          <p className="text-destructive text-xs">{errors.email.message}</p>
         )}
       </div>
 
@@ -107,7 +104,7 @@ export function RegisterForm() {
           {...register("password")}
         />
         {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
+          <p className="text-destructive text-xs">{errors.password.message}</p>
         )}
       </div>
 
@@ -121,7 +118,7 @@ export function RegisterForm() {
           {...register("confirmPassword")}
         />
         {errors.confirmPassword && (
-          <p className="text-xs text-destructive">
+          <p className="text-destructive text-xs">
             {errors.confirmPassword.message}
           </p>
         )}

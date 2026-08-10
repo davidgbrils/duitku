@@ -23,11 +23,11 @@ export default function RegisterPage() {
         <RegisterForm />
       </CardContent>
       <CardFooter className="justify-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Sudah punya akun?{" "}
           <Link
             href="/login"
-            className="font-medium text-primary hover:underline"
+            className="text-primary font-medium hover:underline"
           >
             Masuk
           </Link>

@@ -369,3 +369,47 @@ Package `shadcn` dipasang pada `dependencies`, bukan `devDependencies`.
 ### Konsekuensi
 
 Package `shadcn` tidak boleh dihapus selama preset base-nova digunakan. Alternatif masa depan: meng-inline CSS tema ke dalam project, lalu memindahkan `shadcn` ke `devDependencies`.
+
+---
+
+## ADR-012: Transaksi vs Transfer — Entitas Terpisah
+
+* **Tanggal:** 2026-08-10
+* **Status:** Diterima
+
+### Konteks
+
+ARCHITECTURE.md §11 menampilkan `transactions.type` bernilai `income | expense | transfer`, sementara §12 merekomendasikan entitas `transfers` terpisah untuk implementasi yang lebih robust.
+
+### Keputusan final
+
+`transactions` hanya menyimpan `income` dan `expense`. Transfer memiliki tabel `transfers` sendiri (source_wallet_id, destination_wallet_id, amount, transfer_date).
+
+### Alasan
+
+* Transfer bukan income/expense (ADR-007) — dashboard harus mengecualikannya dari perhitungan.
+* Entitas terpisah menjaga integritas: constraint source ≠ destination, dan riwayat transfer dapat diquery terpisah.
+* Total balance tidak berubah pada transfer — logika perhitungan lebih sederhana dan aman.
+
+### Konsekuensi
+
+* App tidak perlu membuat baris `transactions` untuk transfer.
+* UI transfer (TASK-0701) membaca dari tabel `transfers`.
+* Saldo wallet dimutasi secara atomik melalui RPC `create/update/delete_transfer`.
+
+---
+
+## ADR-013: Representasi & Mutasi Saldo
+
+* **Tanggal:** 2026-08-10
+* **Status:** Diterima
+
+### Keputusan final
+
+* Uang disimpan sebagai `NUMERIC(19,2)` (ARCHITECTURE §15) — bukan floating point.
+* `current_balance` wallet dimutasi secara atomik di dalam RPC security definer (ADR-008), tidak pernah langsung dari client.
+* Saldo negatif sementara **diizinkan** di layer database (tanpa check constraint) — kebijakan saldo negatif final menunggu review developer di TASK-0603.
+
+### Konsekuensi
+
+Setiap operasi finansial (create/update/delete transaction & transfer) harus melalui RPC — client tidak boleh meng-INSERT/UPDATE wallet balance secara langsung.

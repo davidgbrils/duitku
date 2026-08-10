@@ -102,12 +102,14 @@ Tidak ada secret di repository.
 # PHASE 2 — Authentication
 
 ## TASK-0201 — Authentication Audit
+> **Note (2026-08-10):** Register/Login/Logout/session/protected routes sudah diimplementasi (Supabase Auth + proxy). Verifikasi live menunggu kredensial Supabase (.env.local).
 
-* [ ] 🤖 Verify Register
-* [ ] 🤖 Verify Login
-* [ ] 🤖 Verify Logout
-* [ ] 🤖 Verify Session
-* [ ] 🤖 Verify Protected Routes
+
+* [~] 🤖 Verify Register
+* [~] 🤖 Verify Login
+* [~] 🤖 Verify Logout
+* [~] 🤖 Verify Session
+* [~] 🤖 Verify Protected Routes
 
 ### Acceptance Criteria
 
@@ -116,9 +118,11 @@ Unauthenticated user tidak dapat mengakses authenticated pages.
 ---
 
 ## TASK-0202 — Authorization
+> **Note (2026-08-10):** RLS policies + ownership check diimplementasi (RLS + RPC security definer). Test cross-user butuh Supabase live + 2 akun uji.
 
-* [ ] 🤖 Verify user ownership checks
-* [ ] 🤖 Verify RLS policies
+
+* [~] 🤖 Verify user ownership checks
+* [~] 🤖 Verify RLS policies
 * [ ] 🤝 Test cross-user access
 
 ### Acceptance Criteria
@@ -134,9 +138,11 @@ User A tidak dapat membaca/mengubah data User B.
 # PHASE 3 — Database
 
 ## TASK-0301 — Schema Audit
+> **Note (2026-08-10):** Schema dirancang mengikuti ARCHITECTURE.md → supabase/migrations/0001_init.sql. Review 👤 menunggu developer.
 
-* [ ] 🤖 Compare current schema with `ARCHITECTURE.md`
-* [ ] 🤖 Identify missing tables/fields
+
+* [x] 🤖 Compare current schema with `ARCHITECTURE.md`
+* [x] 🤖 Identify missing tables/fields
 * [ ] 👤 Review schema changes
 
 ### Acceptance Criteria
@@ -146,8 +152,10 @@ Schema production dan architecture documentation konsisten.
 ---
 
 ## TASK-0302 — Database Migrations
+> **Note (2026-08-10):** 0001_init.sql dibuat. Test migration menunggu Supabase project.
 
-* [ ] 🤖 Create missing migrations
+
+* [x] 🤖 Create missing migrations
 * [ ] 🤖 Test migration
 * [ ] 🤝 Review destructive changes
 
@@ -189,10 +197,12 @@ Balance selalu konsisten dengan Transaction.
 # PHASE 5 — Category
 
 ## TASK-0501 — Default Categories
+> **Note (2026-08-10):** Kategori default di-seed otomatis via trigger handle_new_user (0001_init.sql). Verifikasi live menunggu kredensial.
 
-* [ ] 🤖 Define default income categories
-* [ ] 🤖 Define default expense categories
-* [ ] 🤖 Seed categories
+
+* [x] 🤖 Define default income categories
+* [x] 🤖 Define default expense categories
+* [~] 🤖 Seed categories
 
 ### Acceptance Criteria
 

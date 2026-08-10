@@ -1,7 +1,13 @@
 import { redirect } from "next/navigation";
 
 import { SignOutButton } from "@/components/shared/SignOutButton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +35,7 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8">
       <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-muted-foreground mt-1 text-sm">
         Selamat datang, {profile?.display_name || user.email} 👋
       </p>
 
@@ -40,7 +46,7 @@ export default async function DashboardPage() {
             Dashboard ringkasan keuanganmu akan tersedia di sini.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
+        <CardContent className="text-muted-foreground text-sm">
           Rute ini terproteksi — hanya user yang sudah login yang bisa
           mengaksesnya.
         </CardContent>

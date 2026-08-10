@@ -29,7 +29,7 @@ export default async function LoginPage({
         {error === "auth" && (
           <p
             role="alert"
-            className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm"
           >
             Sesi berakhir atau tautan tidak valid. Silakan login ulang.
           </p>
@@ -37,11 +37,11 @@ export default async function LoginPage({
         <LoginForm nextUrl={next} />
       </CardContent>
       <CardFooter className="justify-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Belum punya akun?{" "}
           <Link
             href="/register"
-            className="font-medium text-primary hover:underline"
+            className="text-primary font-medium hover:underline"
           >
             Daftar
           </Link>

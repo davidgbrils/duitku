@@ -17,7 +17,7 @@ const protectedPrefixes = [
 /** Halaman auth — user yang sudah login diarahkan ke dashboard. */
 const authPages = ["/login", "/register"] as const;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Sebelum Supabase dikonfigurasi (.env.local kosong), lewati proteksi
