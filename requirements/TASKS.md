@@ -439,6 +439,39 @@ Core flows usable pada desktop dan mobile browser.
 
 ---
 
+## TASK-1006 — Landing Page (Public Entry)
+
+> **Update (2026-08-11):** Landing page selesai sebagai entry point publik di `/` (mengganti template create-next-app). Auth routing ditangani `proxy.ts` (visitor → landing; user login dari `/` → `/dashboard`). Route `/signup` ditambahkan sebagai alias redirect ke `/register`.
+
+* [x] 🤖 Navbar sticky + hamburger mobile
+* [x] 🤖 Hero (headline + CTA + mockup dashboard, Motion stagger + count-up)
+* [x] 🤖 Value proposition (4 kartu)
+* [x] 🤖 Core features (hanya fitur yang sudah ada)
+* [x] 🤖 How it works (3 langkah)
+* [x] 🤖 Section Scan Struk (fitur sudah tersedia)
+* [x] 🤖 Dashboard preview (komponen Duitku asli + data contoh)
+* [x] 🤖 Pricing freemium jujur (Premium = Segera Hadir)
+* [x] 🤖 FAQ (details/summary native, tanpa JS)
+* [x] 🤖 Final CTA + footer
+* [x] 🤖 SEO metadata (title/description/OG) + semantic heading (1× H1)
+* [x] 🤖 Aksesibilitas: reduced motion, keyboard, aria
+* [ ] 🤝 Review visual developer (mobile/desktop/tablet)
+
+---
+
+## TASK-1007 — Receipt Scanner (Scan Struk)
+
+> **Update (2026-08-11):** Fitur scan struk end-to-end: upload foto → OCR Tesseract.js (client-side, bahasa ind, tanpa kirim gambar ke server) → ekstraksi heuristik + confidence → layar Review & Confirm (wajib, tidak pernah auto-save) → simpan transaksi expense. Parser murni di `lib/receipt/` (22 unit test). Entry: tombol "Scan Struk" di halaman transaksi.
+
+* [x] 🤖 Parser ekstraksi (merchant, tanggal, item, total, metode bayar, confidence) di `lib/receipt/extract.ts`
+* [x] 🤖 Deteksi kategori dari nama item vs kategori user di `lib/receipt/categories.ts`
+* [x] 🤖 UI: upload (kamera mobile) → processing → review & confirm → simpan
+* [x] 🤖 22 unit test (parser + kategori)
+* [ ] 🤝 Tesseract lang data (CDN) diverifikasi di perangkat nyata
+* [ ] 🤖 Persist `receipt_image` (Supabase Storage + kolom DB) — belum dilakukan
+
+---
+
 ## TASK-1005 — Animation System (ADR-014)
 
 > **Update (2026-08-11):** Motion terintegrasi sebagai default UI animation library (ADR-014). Lottie (@lottiefiles/dotlottie-react) dipasang untuk animasi sukses (success payment / notifikasi sukses) via `components/shared/success_animation.tsx` + asset `public/animations/success_payment.json`. Rive/GSAP sengaja TIDAK dipasang — belum ada use case nyata (anti over-engineering).

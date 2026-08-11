@@ -50,6 +50,9 @@ function Button({
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      // `render` menggantikan elemen asli (mis. <Link>): matikan asumsi
+      // native <button> agar semantik & aksesibilitas tetap benar.
+      nativeButton={props.render ? false : undefined}
       {...props}
     />
   );

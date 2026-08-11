@@ -141,11 +141,6 @@ function toIsoDate(day: number, month: number, year: number): string | null {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function isTotalLine(line: string): boolean {
-  const lower = line.toLowerCase();
-  return TOTAL_KEYWORDS.some((keyword) => lower.startsWith(keyword));
-}
-
 export function extractReceipt(rawText: string): ReceiptExtraction {
   const lines = rawText
     .split(/\r?\n/)

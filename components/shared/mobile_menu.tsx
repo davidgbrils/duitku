@@ -19,12 +19,14 @@ import { SignOutButton } from "./sign_out_button";
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const [prevPathname, setPrevPathname] = useState(pathname);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Tutup saat pindah halaman.
-  useEffect(() => {
+  // Tutup saat pindah halaman (render-phase update, tanpa effect).
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   // Tutup saat Escape ditekan atau klik di luar menu.
   useEffect(() => {

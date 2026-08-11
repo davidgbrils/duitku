@@ -67,7 +67,6 @@ export function ReceiptScannerDialog({
   const [transactionDate, setTransactionDate] = useState("");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState(NO_CATEGORY_VALUE);
-  const [categoryConfidence, setCategoryConfidence] = useState(0);
   const [walletId, setWalletId] = useState("");
   const [description, setDescription] = useState("");
 
@@ -127,7 +126,6 @@ export function ReceiptScannerDialog({
       setTransactionDate(base.transactionDate ?? todayIso());
       setAmount(base.totalAmount !== null ? String(base.totalAmount) : "");
       setCategoryId(category.categoryId ?? NO_CATEGORY_VALUE);
-      setCategoryConfidence(category.confidence);
       setWalletId(activeWallets[0]?.id ?? "");
       setDescription(
         base.merchantName ? `Struk ${base.merchantName}` : "Struk belanja"
