@@ -29,6 +29,7 @@ Arsitektur Duitku harus:
 | UI               | React                                                             |
 | Styling          | Tailwind CSS                                                      |
 | UI Components    | shadcn/ui                                                         |
+| Animation        | Motion (default) — Rive/Lottie/GSAP disisipkan sesuai kebutuhan   |
 | Backend          | Next.js Server / Route Handlers / Server Actions sesuai kebutuhan |
 | Database         | PostgreSQL                                                        |
 | Backend Platform | Supabase                                                          |
@@ -175,6 +176,7 @@ duitku/
 │
 ├── components/
 │   ├── ui/
+│   ├── animations/
 │   ├── dashboard/
 │   ├── transactions/
 │   ├── wallets/
@@ -822,3 +824,26 @@ Duitku dapat berkembang:
 ```
 
 Namun core architecture tetap dimulai sebagai **modular monolith**, bukan microservices.
+
+---
+
+# 24. Animation System (ADR-014)
+
+Motion adalah default UI animation library.
+
+Struktur:
+
+```text
+lib/animations/motion.ts       → variant terpusat (fadeIn, fadeInUp, scaleIn, staggerContainer)
+components/animations/
+  motion_provider.tsx          → MotionConfig reducedMotion="user" (aksesibilitas global)
+  reveal.tsx                   → entrance animation untuk section/kartu
+  animated_rupiah.tsx          → count-up Rupiah (respect reduced motion)
+```
+
+Aturan:
+
+* Motion hanya dipakai di komponen **client** — Server Page → komponen animasi client, jangan mengubah seluruh page menjadi client.
+* Variant dipakai dari `lib/animations/motion.ts`, jangan buat konfigurasi random per komponen.
+* Rive/Lottie/GSAP belum dipasang (ADR-014) — tambahkan hanya jika ada use case nyata.
+* Semua animasi harus hormati prefers-reduced-motion.

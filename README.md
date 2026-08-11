@@ -1,36 +1,147 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Duitku — Personal Finance Tracker
 
-## Getting Started
+Aplikasi web **pencatatan keuangan pribadi** (bahasa Indonesia) untuk mencatat pemasukan & pengeluaran, mengelola wallet, kategori, dan transfer antar wallet — dengan dashboard ringkasan dan riwayat transaksi yang bisa difilter.
 
-First, run the development server:
+> Project portfolio — dibuat oleh solo developer dengan fokus: **aman, sederhana, dan mudah dipahami**.
+
+## ✨ Fitur
+
+| Fitur | Status |
+| --- | --- |
+| Autentikasi (register/login/logout, protected routes) | ✅ |
+| Wallet CRUD (cash, bank, e-wallet, lainnya) + saldo | ✅ |
+| Kategori CRUD (pemasukan & pengeluaran, seed otomatis) | ✅ |
+| Transaksi income/expense (create, edit, delete) | ✅ |
+| Transfer antar wallet (atomik) | ✅ |
+| Dashboard: total saldo, arus kas, tren bulanan, breakdown kategori | ✅ |
+| Riwayat: cari, filter (tipe/kategori/wallet/tanggal), urutkan, paginasi | ✅ |
+| Unit test (validasi & utilitas keuangan) | ✅ |
+
+## 🧱 Tech Stack
+
+- **Framework:** Next.js 16 (App Router, Turbopack) + TypeScript strict
+- **UI:** Tailwind CSS 4 + shadcn/ui (Base UI) — dark mode siap
+- **Database:** Supabase PostgreSQL + Row Level Security (RLS)
+- **Auth:** Supabase Auth (email/password) via `@supabase/ssr`
+- **Validasi:** Zod + React Hook Form
+- **Testing:** Vitest
+
+## 🏗️ Arsitektur Singkat
+
+```
+Browser ──▶ Next.js (App Router)
+              ├── proxy.ts        → proteksi route + session (Next 16 convention)
+              ├── app/            → halaman (Server Components)
+              ├── features/       → form client (react-hook-form + zod)
+              ├── actions/        → Server Actions (validasi Zod → RPC)
+              └── lib/            → supabase client, validasi, util uang/tanggal
+                      │
+                      ▼
+              Supabase PostgreSQL
+              ├── RLS (ownership: user hanya akses datanya sendiri)
+              └── RPC SECURITY DEFINER (semua mutasi finansial atomik)
+```
+
+**Poin arsitektur penting:**
+
+- Semua operasi finansial (transaksi, transfer, mutasi saldo) hanya lewat **RPC `SECURITY DEFINER`** — client tidak bisa INSERT/UPDATE/DELETE langsung, sehingga invariant saldo tidak bisa dilewati.
+- Uang disimpan sebagai `NUMERIC(19,2)` (bukan float); formatter Rupiah **deterministik** (identik di server & browser).
+- Ownership divalidasi dua lapis: **RLS** di database + validasi **Zod** di server action.
+
+Dokumentasi lengkap: [`requirements/`](requirements/) (PRD, ARCHITECTURE, DESIGN, DECISIONS, TASKS) dan [`docs/PORTFOLIO.md`](docs/PORTFOLIO.md).
+
+## 🚀 Setup Lokal
+
+### 1. Prasyarat
+
+- Node.js 20+
+- Akun [Supabase](https://supabase.com) (free tier cukup)
+
+### 2. Instalasi
+
+```bash
+npm ci
+```
+
+### 3. Supabase
+
+1. Buat project di [supabase.com](https://supabase.com).
+2. Buka **SQL Editor**, jalankan migration secara berurutan:
+   ```bash
+   supabase/migrations/0001_init.sql
+   supabase/migrations/0002_wallet_crud.sql
+   supabase/migrations/0003_performance_indexes.sql
+   ```
+   (atau pakai Supabase CLI: `supabase db push`)
+3. Catat **Project URL** dan **anon public key** dari *Project Settings → API*.
+
+### 4. Environment Variables
+
+```bash
+cp .env.example .env.local
+```
+
+Isi `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+### 5. Jalankan
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Tanpa `.env.local` aplikasi tetap bisa dijalankan (halaman publik tampil, proteksi auth dilewati) — sesuai desain agar `next build` tidak gagal sebelum env diisi.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧪 Testing
 
-## Learn More
+```bash
+npm test          # unit test (Vitest)
+npm run typecheck # TypeScript strict
+npm run lint      # ESLint
+npm run build     # production build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## ☁️ Deploy ke Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Push repository ke GitHub.
+2. Di [vercel.com](https://vercel.com) → **Add New Project** → pilih repo.
+3. Framework preset: **Next.js** (auto-detect), Root Directory: `./`, **jangan override** build settings.
+4. Tambah environment variables (sama untuk Production/Preview/Development):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SITE_URL=https://duitku.vercel.app` (URL deploy kamu)
+5. Deploy.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 Struktur Folder
 
-## Deploy on Vercel
+```
+app/                  # Routes (App Router)
+  (auth)/             # /login, /register
+  (dashboard)/        # /dashboard, /wallets, /categories, /transactions, /transfers
+actions/              # Server Actions (mutasi lewat RPC)
+components/           # UI + komponen fitur
+features/             # Form client per fitur
+lib/
+  supabase/           # client & server Supabase
+  utils/              # money, date, navigation
+  validations/        # Schema Zod
+supabase/
+  migrations/         # SQL migration (SSOT database)
+tests/unit/           # Unit test
+types/database.ts     # Tipe database (manual, sinkron dengan migration)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔐 Keamanan
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **RLS** aktif di semua tabel user-owned — User A tidak bisa membaca/mengubah data User B.
+- Mutasi finansial via RPC dengan validasi `auth.uid()` di dalam database (bukan dari client).
+- Semua input divalidasi **Zod di server** (bukan hanya UX frontend).
+- Error database tidak pernah bocor ke user (pesan generik + log teknis).
+- Secret tidak pernah di-commit; `.env*` ter-ignore.

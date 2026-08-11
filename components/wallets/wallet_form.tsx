@@ -156,6 +156,8 @@ function CreateWalletForm({ onDone }: { onDone: () => void }) {
               onValueChange={(value) =>
                 field.onChange(value as (typeof WALLET_TYPES)[number])
               }
+              // Base UI menampilkan label hanya jika `items` diberikan ke Root.
+              items={typeLabels}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -283,6 +285,8 @@ function EditWalletForm({
               onValueChange={(value) =>
                 field.onChange(value as (typeof WALLET_TYPES)[number])
               }
+              // Base UI menampilkan label hanya jika `items` diberikan ke Root.
+              items={typeLabels}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />

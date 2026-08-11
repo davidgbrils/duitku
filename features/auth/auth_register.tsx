@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { registerAction } from "@/actions/auth";
+import { SuccessAnimation } from "@/components/shared/success_animation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,12 +55,13 @@ export function RegisterForm() {
         </p>
       )}
       {success && (
-        <p
+        <div
           role="status"
-          className="bg-success/10 text-success rounded-lg px-3 py-2 text-sm"
+          className="bg-success/10 text-success flex flex-col items-center gap-2 rounded-lg px-4 py-4 text-center"
         >
-          {success}
-        </p>
+          <SuccessAnimation className="size-16" />
+          <p className="text-sm font-medium">{success}</p>
+        </div>
       )}
 
       <div className="grid gap-1.5">

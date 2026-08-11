@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Trash2, Wallet as WalletIcon } from "lucide-react";
+import { Loader2, Tag, Trash2 } from "lucide-react";
 
-import { deleteWalletAction } from "@/actions/wallets";
+import { deleteCategoryAction } from "@/actions/categories";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,36 +18,24 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { formatRupiah } from "@/lib/utils/money";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Database } from "@/types/database";
 
-import { EditWalletDialog } from "./WalletForm";
+import { EditCategoryDialog } from "@/features/categories/category_form";
 
-type Wallet = Database["public"]["Tables"]["wallets"]["Row"];
+type Category = Database["public"]["Tables"]["categories"]["Row"];
 
-const typeLabels: Record<Wallet["type"], string> = {
-  cash: "Tunai",
-  bank: "Bank",
-  ewallet: "E-Wallet",
-  other: "Lainnya",
-};
-
-export function WalletCard({ wallet }: { wallet: Wallet }) {
+export function CategoryCard({ category }: { category: Category }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  const isIncome = category.type === "income";
+
   const handleDelete = () => {
     setDeleteError(null);
     startTransition(async () => {
-      const result = await deleteWalletAction(wallet.id);
+      const result = await deleteCategoryAction(category.id);
       if (result?.error) {
         setDeleteError(result.error);
         return;
@@ -57,38 +45,44 @@ export function WalletCard({ wallet }: { wallet: Wallet }) {
   };
 
   return (
-    <Card
-      data-active={wallet.is_active}
-      className="data-[active=false]:opacity-60"
-    >
-      <CardHeader className="flex-row items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="bg-muted flex size-8 items-center justify-center rounded-lg">
-            <WalletIcon className="size-4" />
+    <Card>
+      <CardContent className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg">
+            <Tag className="size-4" />
           </span>
-          <div>
-            <CardTitle>{wallet.name}</CardTitle>
-            <CardDescription>{typeLabels[wallet.type]}</CardDescription>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{category.name}</p>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <Badge
+                variant={isIncome ? "default" : "destructive"}
+                className={isIncome ? "bg-success/10 text-success" : undefined}
+              >
+                {isIncome ? "Pemasukan" : "Pengeluaran"}
+              </Badge>
+              {category.is_default && (
+                <span className="text-muted-foreground text-xs">Default</span>
+              )}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <EditWalletDialog wallet={wallet} />
+        <div className="flex shrink-0 items-center gap-1">
+          <EditCategoryDialog category={category} />
           <AlertDialog>
             <AlertDialogTrigger
               render={
                 <Button variant="ghost" size="icon-sm">
                   <Trash2 />
-                  <span className="sr-only">Hapus {wallet.name}</span>
+                  <span className="sr-only">Hapus {category.name}</span>
                 </Button>
               }
             />
             <AlertDialogContent size="sm">
               <AlertDialogHeader>
-                <AlertDialogTitle>Hapus wallet?</AlertDialogTitle>
+                <AlertDialogTitle>Hapus kategori?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Wallet <strong>{wallet.name}</strong> beserta semua
-                  transaksinya akan dihapus. Tindakan ini tidak dapat
-                  dibatalkan.
+                  Kategori <strong>{category.name}</strong> akan dihapus.
+                  Transaksi yang memakainya tetap tersimpan tanpa kategori.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               {deleteError && (
@@ -119,16 +113,6 @@ export function WalletCard({ wallet }: { wallet: Wallet }) {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-xl font-semibold tracking-tight">
-          {formatRupiah(wallet.current_balance)}
-        </p>
-        {!wallet.is_active && (
-          <Badge variant="secondary" className="mt-1">
-            Nonaktif
-          </Badge>
-        )}
       </CardContent>
     </Card>
   );

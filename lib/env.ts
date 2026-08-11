@@ -32,6 +32,18 @@ export function getSupabaseEnv(): {
     throw new Error(SUPABASE_KEY_MISSING);
   }
 
+  // TASK-0102: validasi format agar error dini, bukan di tengah runtime.
+  if (!/^https?:\/\/.+/.test(url)) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL tidak valid: harus berupa URL lengkap (mis. https://xxx.supabase.co)."
+    );
+  }
+  if (!/^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(anonKey)) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY tidak valid: gunakan anon public key (diawali eyJ...), bukan service_role key."
+    );
+  }
+
   return { url, anonKey };
 }
 

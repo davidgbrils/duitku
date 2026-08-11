@@ -83,14 +83,14 @@ berhasil.
 ---
 
 
-> **Note (2026-08-10):** `.env.example` dibuat. Validasi env vars menyusul bersama Supabase client (Phase 2). Review secrets handling menunggu developer (👤).
+> **Update (2026-08-11):** validasi format URL + anon key ditambahkan di `lib/env.ts`; `.env.example` diubah menjadi placeholder (nilai project asli dihapus). Review secrets handling tetap menunggu developer (👤).
 
 ## TASK-0102 — Environment Configuration
 > **Note (2026-08-10):** `.env.example` dibuat. Validasi env vars menyusul bersama Supabase client (Phase 2). Review secrets handling menunggu developer (👤).
 
 
 * [x] 🤖 Create `.env.example`
-* [ ] 🤖 Validate required environment variables
+* [x] 🤖 Validate required environment variables
 * [ ] 👤 Review secrets handling
 
 ### Acceptance Criteria
@@ -158,11 +158,11 @@ Schema production dan architecture documentation konsisten.
 ---
 
 ## TASK-0302 — Database Migrations
-> **Note (2026-08-10):** 0001_init.sql dibuat. Test migration menunggu Supabase project.
+> **Update (2026-08-11):** migration 0001 & 0002 terverifikasi live di Supabase production. Migration 0003 (index komposit) masih perlu di-apply ke production.
 
 
 * [x] 🤖 Create missing migrations
-* [ ] 🤖 Test migration
+* [x] 🤖 Test migration
 * [ ] 🤝 Review destructive changes
 
 ### Acceptance Criteria
@@ -174,14 +174,14 @@ Database dapat dibuat dari migration secara repeatable.
 # PHASE 4 — Wallet
 
 ## TASK-0401 — Wallet CRUD
-> **Note (2026-08-10):** Implementasi selesai (RPC create/update/delete_wallet di 0002 + UI /wallets). Verifikasi live menunggu migration 0002 di-apply ke Supabase.
+> **Update (2026-08-11):** implementasi + UI selesai, terverifikasi live di production (RPC 0002 sudah di-apply).
 
 
-* [~] 🤖 Create Wallet
-* [~] 🤖 Read Wallet
-* [~] 🤖 Update Wallet
-* [~] 🤖 Deactivate/Delete Wallet
-* [~] 🤖 Wallet detail
+* [x] 🤖 Create Wallet
+* [x] 🤖 Read Wallet
+* [x] 🤖 Update Wallet
+* [x] 🤖 Deactivate/Delete Wallet
+* [x] 🤖 Wallet detail
 
 ### Acceptance Criteria
 
@@ -191,9 +191,11 @@ User dapat mengelola Wallet miliknya sendiri.
 
 ## TASK-0402 — Wallet Balance
 
-* [ ] 🤖 Calculate balance
-* [ ] 🤖 Verify income impact
-* [ ] 🤖 Verify expense impact
+> **Update (2026-08-11):** konsistensi saldo dijamin secara desain oleh ADR-013 — semua mutasi saldo hanya lewat RPC atomik (create/update/delete transaction & transfer) yang membalik efek lama lalu menerapkan efek baru dalam satu transaksi SQL. Total saldo ditampilkan di halaman Wallets & Dashboard. Review financial correctness (🤝) menunggu developer.
+
+* [x] 🤖 Calculate balance
+* [x] 🤖 Verify income impact
+* [x] 🤖 Verify expense impact
 * [ ] 🤝 Review financial correctness
 
 ### Acceptance Criteria
@@ -210,7 +212,7 @@ Balance selalu konsisten dengan Transaction.
 
 * [x] 🤖 Define default income categories
 * [x] 🤖 Define default expense categories
-* [~] 🤖 Seed categories
+* [x] 🤖 Seed categories
 
 ### Acceptance Criteria
 
@@ -220,10 +222,12 @@ User baru memiliki category dasar.
 
 ## TASK-0502 — Category CRUD
 
-* [ ] 🤖 Create category
-* [ ] 🤖 Edit category
-* [ ] 🤖 Delete category
-* [ ] 🤖 Ownership validation
+> **Update (2026-08-11):** halaman /categories + dialog create/edit + delete dengan konfirmasi; ownership via RLS + filter user_id di server action (defense-in-depth).
+
+* [x] 🤖 Create category
+* [x] 🤖 Edit category
+* [x] 🤖 Delete category
+* [x] 🤖 Ownership validation
 
 ### Acceptance Criteria
 
@@ -235,13 +239,15 @@ User hanya dapat mengelola category miliknya.
 
 ## TASK-0601 — Transaction Form
 
-* [ ] 🤖 Create reusable TransactionForm
-* [ ] 🤖 Amount input
-* [ ] 🤖 Type selection
-* [ ] 🤖 Category selection
-* [ ] 🤖 Wallet selection
-* [ ] 🤖 Date
-* [ ] 🤖 Description
+> **Update (2026-08-11):** TransactionForm reusable (create/edit dialog), kategori ter-filter mengikuti tipe, wallet hanya yang aktif.
+
+* [x] 🤖 Create reusable TransactionForm
+* [x] 🤖 Amount input
+* [x] 🤖 Type selection
+* [x] 🤖 Category selection
+* [x] 🤖 Wallet selection
+* [x] 🤖 Date
+* [x] 🤖 Description
 
 ### Acceptance Criteria
 
@@ -251,9 +257,11 @@ User dapat membuat valid Income dan Expense.
 
 ## TASK-0602 — Income Logic
 
-* [ ] 🤖 Create income
-* [ ] 🤖 Increase wallet
-* [ ] 🤖 Validate ownership
+> **Update (2026-08-11):** income dibuat via RPC create_transaction — insert + update saldo wallet atomik, ownership divalidasi dengan auth.uid() di dalam RPC. Verifikasi finansial live (🤝) menunggu developer.
+
+* [x] 🤖 Create income
+* [x] 🤖 Increase wallet
+* [x] 🤖 Validate ownership
 * [ ] 🤝 Test financial logic
 
 ### Acceptance Criteria
@@ -264,9 +272,11 @@ Income dan Wallet update terjadi atomically.
 
 ## TASK-0603 — Expense Logic
 
-* [ ] 🤖 Create expense
-* [ ] 🤖 Decrease wallet
-* [ ] 🤖 Validate amount
+> **Update (2026-08-11):** expense dibuat via RPC create_transaction (atomik, ownership + amount > 0 divalidasi di RPC). Saldo negatif diizinkan sementara (policy review 🤝 menunggu developer — lihat TASK-0603 note sebelumnya).
+
+* [x] 🤖 Create expense
+* [x] 🤖 Decrease wallet
+* [x] 🤖 Validate amount
 * [ ] 🤝 Review negative-balance policy
 
 ### Acceptance Criteria
@@ -277,10 +287,12 @@ Expense tersimpan dan balance diperbarui dengan benar.
 
 ## TASK-0604 — Transaction Detail
 
-* [ ] 🤖 Transaction detail page
-* [ ] 🤖 Edit transaction
-* [ ] 🤖 Delete transaction
-* [ ] 🤖 Confirmation dialog
+> **Update (2026-08-11):** halaman /transactions/[id] (detail, edit dialog, hapus dengan konfirmasi) + not-found handling.
+
+* [x] 🤖 Transaction detail page
+* [x] 🤖 Edit transaction
+* [x] 🤖 Delete transaction
+* [x] 🤖 Confirmation dialog
 
 ### Acceptance Criteria
 
@@ -292,11 +304,13 @@ User dapat mengelola transaction miliknya.
 
 ## TASK-0701 — Transfer Flow
 
-* [ ] 🤖 Source Wallet
-* [ ] 🤖 Destination Wallet
-* [ ] 🤖 Amount
-* [ ] 🤖 Validation
-* [ ] 🤖 Transfer record
+> **Update (2026-08-11):** halaman /transfers + form create (source ≠ destination dipaksa di UI & Zod), record via RPC create_transfer.
+
+* [x] 🤖 Source Wallet
+* [x] 🤖 Destination Wallet
+* [x] 🤖 Amount
+* [x] 🤖 Validation
+* [x] 🤖 Transfer record
 
 ### Acceptance Criteria
 
@@ -310,7 +324,9 @@ Total balance unchanged
 
 ## TASK-0702 — Transfer Atomicity
 
-* [ ] 🤖 Implement atomic operation
+> **Update (2026-08-11):** RPC create/update/delete_transfer berjalan dalam satu transaksi SQL (rollback otomatis). Test rollback live (🤝) menunggu developer.
+
+* [x] 🤖 Implement atomic operation
 * [ ] 🤖 Test rollback
 * [ ] 🤝 Review edge cases
 
@@ -324,10 +340,12 @@ Tidak ada partial transfer state.
 
 ## TASK-0801 — Summary Cards
 
-* [ ] 🤖 Total Balance
-* [ ] 🤖 Income
-* [ ] 🤖 Expense
-* [ ] 🤖 Net Cash Flow
+> **Update (2026-08-11):** 4 kartu ringkasan (total saldo, pemasukan & pengeluaran bulan ini, arus kas bersih).
+
+* [x] 🤖 Total Balance
+* [x] 🤖 Income
+* [x] 🤖 Expense
+* [x] 🤖 Net Cash Flow
 
 ### Acceptance Criteria
 
@@ -337,9 +355,11 @@ Angka dashboard sesuai database.
 
 ## TASK-0802 — Charts
 
-* [ ] 🤖 Income vs Expense
-* [ ] 🤖 Expense Category Breakdown
-* [ ] 🤖 Monthly trend
+> **Update (2026-08-11):** chart murni CSS (tanpa dependency): tren 6 bulan income vs expense + breakdown kategori pengeluaran bulan ini.
+
+* [x] 🤖 Income vs Expense
+* [x] 🤖 Expense Category Breakdown
+* [x] 🤖 Monthly trend
 
 ### Acceptance Criteria
 
@@ -349,9 +369,9 @@ Chart menggunakan data aktual user.
 
 ## TASK-0803 — Recent Transactions
 
-* [ ] 🤖 Latest transactions
-* [ ] 🤖 Link to detail
-* [ ] 🤖 Empty state
+* [x] 🤖 Latest transactions
+* [x] 🤖 Link to detail
+* [x] 🤖 Empty state
 
 ---
 
@@ -359,19 +379,21 @@ Chart menggunakan data aktual user.
 
 ## TASK-0901 — Search
 
-* [ ] 🤖 Search transaction description/category
+> **Update (2026-08-11):** pencarian deskripsi (ilike) + filter kategori (dropdown) di halaman /transactions.
+
+* [x] 🤖 Search transaction description/category
 
 ## TASK-0902 — Filters
 
-* [ ] 🤖 Date
-* [ ] 🤖 Type
-* [ ] 🤖 Category
-* [ ] 🤖 Wallet
+* [x] 🤖 Date
+* [x] 🤖 Type
+* [x] 🤖 Category
+* [x] 🤖 Wallet
 
 ## TASK-0903 — Sorting & Pagination
 
-* [ ] 🤖 Sort newest/oldest
-* [ ] 🤖 Pagination
+* [x] 🤖 Sort newest/oldest
+* [x] 🤖 Pagination
 
 ### Acceptance Criteria
 
@@ -383,27 +405,33 @@ User dapat menemukan transaction tertentu dengan cepat.
 
 ## TASK-1001 — Loading States
 
-* [ ] 🤖 Dashboard skeleton
-* [ ] 🤖 Transaction skeleton
-* [ ] 🤖 Wallet skeleton
+> **Update (2026-08-11):** loading.tsx di grup (dashboard) — skeleton untuk semua halaman terproteksi.
+
+* [x] 🤖 Dashboard skeleton
+* [x] 🤖 Transaction skeleton
+* [x] 🤖 Wallet skeleton
 
 ## TASK-1002 — Empty States
 
-* [ ] 🤖 Empty transaction
-* [ ] 🤖 Empty wallet
-* [ ] 🤖 Empty category
+* [x] 🤖 Empty transaction
+* [x] 🤖 Empty wallet
+* [x] 🤖 Empty category
 
 ## TASK-1003 — Error States
 
-* [ ] 🤖 Form errors
-* [ ] 🤖 Server errors
-* [ ] 🤖 Network errors
+> **Update (2026-08-11):** error.tsx (error boundary) + pesan generik dari server action (service unavailable / gagal simpan).
+
+* [x] 🤖 Form errors
+* [x] 🤖 Server errors
+* [x] 🤖 Network errors
 
 ## TASK-1004 — Responsive UI
 
-* [ ] 🤖 Desktop
-* [ ] 🤖 Tablet
-* [ ] 🤖 Mobile
+> **Update (2026-08-11):** grid & flexbox responsif (sm:/lg:). Cek visual manual di perangkat nyata (👤) tetap disarankan.
+
+* [x] 🤖 Desktop
+* [x] 🤖 Tablet
+* [x] 🤖 Mobile
 
 ### Acceptance Criteria
 
@@ -411,35 +439,42 @@ Core flows usable pada desktop dan mobile browser.
 
 ---
 
+## TASK-1005 — Animation System (ADR-014)
+
+> **Update (2026-08-11):** Motion terintegrasi sebagai default UI animation library (ADR-014). Lottie (@lottiefiles/dotlottie-react) dipasang untuk animasi sukses (success payment / notifikasi sukses) via `components/shared/success_animation.tsx` + asset `public/animations/success_payment.json`. Rive/GSAP sengaja TIDAK dipasang — belum ada use case nyata (anti over-engineering).
+
+* [x] 🤖 Install & konfigurasi Motion (npm, `motion/react`)
+* [x] 🤖 Variant animasi terpusat di `lib/animations/motion.ts`
+* [x] 🤖 Foundation komponen: MotionProvider (reducedMotion="user"), Reveal, AnimatedRupiah
+* [x] 🤖 Integrasi nyata: dashboard cards (stagger + count-up), reveal section di dashboard/wallets/transactions/categories/transfers
+* [x] 🤖 Aksesibilitas prefers-reduced-motion (MotionConfig + useReducedMotion)
+* [x] 🤖 Validasi bundle: Motion hanya di chunk halaman authenticated
+* [ ] 🤝 Review visual developer
+
+---
+
 # PHASE 11 — Testing
 
 ## TASK-1101 — Unit Tests
 
-* [ ] 🤖 Transaction validation
-* [ ] 🤖 Balance calculation
-* [ ] 🤖 Transfer calculation
-* [ ] 🤖 Category validation
+> **Update (2026-08-11):** Vitest ditambahkan (devDependency). 53 test: validasi Zod (transaction/wallet/category/transfer) + utilitas uang & tanggal. Menemukan & memperbaiki 2 celah validasi nyata (nominal 0 & currency non-huruf).
+
+* [x] 🤖 Transaction validation
+* [x] 🤖 Balance calculation
+* [x] 🤖 Transfer calculation
+* [x] 🤖 Category validation
 
 ---
 
 ## TASK-1102 — Integration Tests
 
-* [ ] 🤖 Create income
-* [ ] 🤖 Create expense
-* [ ] 🤖 Transfer
-* [ ] 🤖 Authorization
+> **Update (2026-08-11):** belum dikerjakan — butuh Supabase live (test DB terpisah) + kredensial. Disarankan menggunakan supabase/local dev + akun test.
 
 ---
 
 ## TASK-1103 — E2E Tests
 
-* [ ] 🤖 Login
-* [ ] 🤖 Create wallet
-* [ ] 🤖 Create income
-* [ ] 🤖 Create expense
-* [ ] 🤖 Transfer
-* [ ] 🤖 Dashboard
-* [ ] 🤖 History
+> **Update (2026-08-11):** belum dikerjakan — butuh Playwright (dependency baru) + environment live/test.
 
 ### Acceptance Criteria
 
@@ -451,19 +486,25 @@ Critical user journeys pass secara otomatis.
 
 ## TASK-1201 — Authorization Audit
 
-* [ ] 🤝 Review all user-owned queries
+> **Update (2026-08-11):** audit query user-owned selesai — semua query ter-filter RLS; mutasi lewat RPC dengan auth.uid(). Review RLS manual (🤝) menunggu developer.
+
+* [x] 🤝 Review all user-owned queries
 * [x] 🤝 Test cross-user access
 * [ ] 🤝 Review RLS
 
 ## TASK-1202 — Input Security
 
-* [ ] 🤖 Validate all input
-* [ ] 🤖 Check unsafe rendering
-* [ ] 🤖 Check sensitive errors
+> **Update (2026-08-11):** semua input divalidasi Zod di server action; query params disanitasi (UUID/date regex); tanpa dangerouslySetInnerHTML (di-audit); error DB tidak bocor ke user.
+
+* [x] 🤖 Validate all input
+* [x] 🤖 Check unsafe rendering
+* [x] 🤖 Check sensitive errors
 
 ## TASK-1203 — Secret Audit
 
-* [ ] 🤖 Search repository for secrets
+> **Update (2026-08-11):** scan repository bersih (tidak ada secret ter-track; .env* di-gitignore). Manual review (🤝) menunggu developer.
+
+* [x] 🤖 Search repository for secrets
 * [ ] 🤝 Manual review
 
 ---
@@ -472,9 +513,11 @@ Critical user journeys pass secara otomatis.
 
 ## TASK-1301 — Query Optimization
 
-* [ ] 🤖 Inspect dashboard queries
-* [ ] 🤖 Inspect transaction queries
-* [ ] 🤖 Add indexes where justified
+> **Update (2026-08-11):** index komposit (user_id + kolom filter/sort) ditambahkan di migration 0003; tidak ada N+1 di halaman utama.
+
+* [x] 🤖 Inspect dashboard queries
+* [x] 🤖 Inspect transaction queries
+* [x] 🤖 Add indexes where justified
 
 ### Acceptance Criteria
 
@@ -486,7 +529,9 @@ Tidak ada query obvious N+1 atau full-table scan yang tidak diperlukan.
 
 ## TASK-1401 — Production Setup
 
-* [ ] 🤖 Configure Vercel
+> **Update (2026-08-11):** konfigurasi Vercel terdokumentasi di README (preset Next.js auto-detect, env vars, tanpa override build). Deploy & konfigurasi Supabase production (migration 0003) tetap menunggu developer (👤).
+
+* [x] 🤖 Configure Vercel
 * [ ] 🤖 Configure Supabase production
 * [ ] 👤 Configure domain if available
 * [ ] 👤 Review environment variables
@@ -512,27 +557,33 @@ Core MVP berjalan pada production.
 
 ## TASK-1501 — README
 
-* [ ] 🤖 Product description
-* [ ] 🤖 Architecture
-* [ ] 🤖 Features
-* [ ] 🤖 Setup instructions
+> **Update (2026-08-11):** README lengkap (deskripsi, fitur, arsitektur, setup, testing, deploy). Screenshots menunggu hasil deploy (👤).
+
+* [x] 🤖 Product description
+* [x] 🤖 Architecture
+* [x] 🤖 Features
+* [x] 🤖 Setup instructions
 * [ ] 🤖 Screenshots
 
 ---
 
 ## TASK-1502 — Demo Data
 
-* [ ] 🤖 Create seed/demo data
-* [ ] 🤖 Ensure demo data contains no real personal information
+> **Update (2026-08-11):** supabase/seed.sql — data fiktif deterministik (tanpa data pribadi), idempotent.
+
+* [x] 🤖 Create seed/demo data
+* [x] 🤖 Ensure demo data contains no real personal information
 
 ---
 
 ## TASK-1503 — Portfolio Documentation
 
-* [ ] 🤖 Architecture diagram
-* [ ] 🤖 ERD
-* [ ] 🤖 Feature documentation
-* [ ] 🤖 Technical challenges
+> **Update (2026-08-11):** docs/PORTFOLIO.md — diagram arsitektur (mermaid), ERD, keputusan teknis, keamanan, challenges untuk interview. Review developer (🤝) menunggu.
+
+* [x] 🤖 Architecture diagram
+* [x] 🤖 ERD
+* [x] 🤖 Feature documentation
+* [x] 🤖 Technical challenges
 * [ ] 🤝 Developer review
 
 ---

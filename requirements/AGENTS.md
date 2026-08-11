@@ -155,17 +155,21 @@ updateWalletBalance()
 
 ## Components
 
+Nama file komponen memakai `snake_case` dan diawali domain fiturnya agar mudah dibaca:
+
 ```text
-PascalCase
+{domain}_{fungsi}.tsx
 ```
 
 Contoh:
 
 ```text
-TransactionForm.tsx
-WalletCard.tsx
-DashboardSummary.tsx
+auth_login.tsx
+transaction_form.tsx
+wallet_card.tsx
 ```
+
+Nama export component tetap `PascalCase` (mis. `LoginForm` diekspor dari `auth_login.tsx`).
 
 ## Database
 

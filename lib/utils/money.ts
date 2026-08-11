@@ -4,11 +4,15 @@
  *
  * Catatan: nilai uang disimpan sebagai NUMERIC(19,2) di database.
  * Untuk tampilan MVP, Rupiah praktis ditampilkan tanpa desimal.
+ *
+ * Penting: format dibangun secara DETERMINISTIK (tanpa
+ * style:"currency") karena ICU Node dan browser menghasilkan output
+ * berbeda untuk id-ID (Node menambah non-breaking space, browser
+ * tidak). Konsistensi server/client adalah prasyarat tampilan uang.
  */
 
-const rupiahFormatter = new Intl.NumberFormat("id-ID", {
-  style: "currency",
-  currency: "IDR",
+/** Pemisah ribuan id-ID ("3.000.000") — konsisten di Node & browser. */
+const groupFormatter = new Intl.NumberFormat("id-ID", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 });
@@ -18,7 +22,7 @@ export function formatRupiah(amount: number | null | undefined): string {
   if (amount === null || amount === undefined) {
     return "-";
   }
-  return rupiahFormatter.format(amount);
+  return `Rp${groupFormatter.format(amount)}`;
 }
 
 /** "Rp3.000.000" tanpa desimal, untuk nilai 0 → "Rp0". */
@@ -26,7 +30,7 @@ export function formatRupiahZero(amount: number | null | undefined): string {
   if (amount === null || amount === undefined || amount === 0) {
     return "Rp0";
   }
-  return rupiahFormatter.format(amount);
+  return `Rp${groupFormatter.format(amount)}`;
 }
 
 /**
@@ -34,8 +38,8 @@ export function formatRupiahZero(amount: number | null | undefined): string {
  * income → "+ Rp3.000.000", expense → "- Rp250.000".
  */
 export function formatSignedRupiah(amount: number, positive: boolean): string {
-  const formatted = rupiahFormatter.format(Math.abs(amount));
-  return positive ? `+ ${formatted}` : `- ${formatted}`;
+  const formatted = groupFormatter.format(Math.abs(amount));
+  return positive ? `+ Rp${formatted}` : `- Rp${formatted}`;
 }
 
 /** Parse string input user (mis. "1.500.000" / "1500000") ke number aman. */

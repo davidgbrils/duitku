@@ -541,6 +541,8 @@ CategoryBadge
 ConfirmDialog
 ```
 
+> Nama file mengikuti konvensi `{domain}_{fungsi}.tsx` (mis. `transaction_item.tsx`, `wallet_card.tsx`); daftar di atas adalah nama component (export), bukan nama file.
+
 Domain components:
 
 ```text
@@ -555,6 +557,8 @@ ExpenseBreakdown
 RecentTransactions
 WalletSummary
 ```
+
+> Nama file mengikuti konvensi `{domain}_{fungsi}.tsx` (mis. `transaction_form.tsx`, `wallet_form.tsx`); daftar di atas adalah nama component (export), bukan nama file.
 
 ---
 
@@ -764,3 +768,51 @@ Minimal:
 6. Error harus actionable.
 7. Loading state harus jelas.
 8. Semua halaman authenticated harus konsisten dengan navigation utama.
+
+---
+
+# 23. Animation System (TASK-1005)
+
+## Prinsip
+
+```text
+Tailwind/CSS
+    ↓
+Simple micro interaction
+
+Motion
+    ↓
+Default UI animation
+
+Rive
+    ↓
+Interactive/stateful animation (saat asset tersedia)
+
+Lottie
+    ↓
+Ready-made visual animation (saat dibutuhkan)
+
+GSAP
+    ↓
+Complex animation / timeline (saat dibutuhkan)
+```
+
+## Motion — Default UI Animation
+
+Dipakai untuk: entrance section/kartu, stagger list, animated numbers, dan transisi halus.
+
+Aturan:
+
+1. Gunakan variant terpusat dari `lib/animations/motion.ts` — jangan membuat konfigurasi animasi random di komponen.
+2. Animation boundary sekecil mungkin: halaman tetap Server Component, animasi dibungkus komponen client (`<Reveal>`, `AnimatedRupiah`, dll).
+3. Durasi default: 0.3–0.4s, easing `easeOut` — halus, tidak dramatis.
+4. Animasi entrance berjalan satu kali (`whileInView` + `once: true`) — tidak berulang.
+5. **Aksesibilitas:** semua animasi hormati `prefers-reduced-motion` (MotionConfig `reducedMotion="user"` + `useReducedMotion`). Informasi penting tidak boleh hanya disampaikan lewat animasi.
+
+## Rive / Lottie / GSAP
+
+Belum diintegrasikan (ADR-014).
+
+* **Rive:** untuk empty-state illustration / visual interaktif — butuh asset `.riv`.
+* **Lottie:** untuk success/error/loading ready-made — butuh asset `.json/.lottie` (taruh di `public/animations/`).
+* **GSAP:** untuk landing page timeline / scroll animation.

@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LoginForm } from "@/features/auth/LoginForm";
+import { LoginForm } from "@/features/auth/auth_login";
 
 export default async function LoginPage({
   searchParams,

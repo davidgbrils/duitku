@@ -10,6 +10,7 @@ const protectedPrefixes = [
   "/transactions",
   "/wallets",
   "/categories",
+  "/transfers",
   "/reports",
   "/settings",
 ] as const;

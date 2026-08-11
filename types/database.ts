@@ -158,7 +158,22 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "transactions_wallet_id_fkey";
+            columns: ["wallet_id"];
+            isOneToOne: false;
+            referencedRelation: "wallets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       transfers: {
         Row: {
@@ -191,7 +206,22 @@ export interface Database {
           transfer_date?: string;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "transfers_source_wallet_id_fkey";
+            columns: ["source_wallet_id"];
+            isOneToOne: false;
+            referencedRelation: "wallets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_destination_wallet_id_fkey";
+            columns: ["destination_wallet_id"];
+            isOneToOne: false;
+            referencedRelation: "wallets";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<string, never>;

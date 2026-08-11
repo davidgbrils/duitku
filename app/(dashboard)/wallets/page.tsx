@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
-import { CreateWalletDialog } from "@/components/wallets/WalletForm";
-import { WalletCard } from "@/components/wallets/WalletCard";
+import { Reveal } from "@/components/animations/reveal";
+import { CreateWalletDialog } from "@/components/wallets/wallet_form";
+import { WalletCard } from "@/components/wallets/wallet_card";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/utils/money";
 
@@ -53,20 +54,24 @@ export default async function WalletsPage() {
         </div>
       ) : (
         <>
-          <div className="bg-card ring-border flex items-center justify-between rounded-xl px-5 py-4 ring-1">
-            <p className="text-muted-foreground text-sm font-medium">
-              Total Saldo
-            </p>
-            <p className="text-primary text-2xl font-semibold tracking-tight">
-              {formatRupiah(totalBalance)}
-            </p>
-          </div>
+          <Reveal>
+            <div className="bg-card ring-border flex items-center justify-between rounded-xl px-5 py-4 ring-1">
+              <p className="text-muted-foreground text-sm font-medium">
+                Total Saldo
+              </p>
+              <p className="text-primary text-2xl font-semibold tracking-tight">
+                {formatRupiah(totalBalance)}
+              </p>
+            </div>
+          </Reveal>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {walletList.map((wallet) => (
-              <WalletCard key={wallet.id} wallet={wallet} />
-            ))}
-          </div>
+          <Reveal delay={0.05}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {walletList.map((wallet) => (
+                <WalletCard key={wallet.id} wallet={wallet} />
+              ))}
+            </div>
+          </Reveal>
         </>
       )}
     </div>

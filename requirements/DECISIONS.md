@@ -413,3 +413,40 @@ ARCHITECTURE.md §11 menampilkan `transactions.type` bernilai `income | expense 
 ### Konsekuensi
 
 Setiap operasi finansial (create/update/delete transaction & transfer) harus melalui RPC — client tidak boleh meng-INSERT/UPDATE wallet balance secara langsung.
+
+---
+
+## ADR-014: Motion sebagai Default UI Animation Library
+
+* **Tanggal:** 2026-08-11
+* **Status:** Diterima
+
+### Konteks
+
+Duitku membutuhkan animation system yang ringan, maintainable, dan mudah digunakan AI agent — tanpa membebani bundle atau merusak accessibility.
+
+### Opsi yang dipertimbangkan
+
+1. Motion (motion.dev) — lanjutan framer-motion; dukungan resmi React 19 + Next.js App Router.
+2. Rive (@rive-app/react-webgl2) — butuh asset .riv dari editor Rive; project belum punya asset.
+3. Lottie (@lottiefiles/dotlottie-react) — butuh asset .json/.lottie; use case tunggal (success/loading) sudah cukup ditangani Motion + CSS.
+4. GSAP — untuk complex timeline / scroll animation; belum ada use case di MVP.
+
+### Keputusan final
+
+- **Motion** dipasang sebagai **default UI animation library**.
+- **Lottie (@lottiefiles/dotlottie-react)** dipasang (2026-08-11) khusus untuk animasi success/check-mark ready-made (success payment & notifikasi sukses) — asset di `public/animations/`, wrapper reusable `components/shared/success_animation.tsx`.
+- **Rive & GSAP tidak dipasang pada fase ini** (anti over-engineering, kontrol bundle, aturan "jangan install demi lengkap").
+
+### Alasan
+
+* Motion ringan dan tree-shakable, mendukung React 19 & App Router, aman SSR.
+* `MotionConfig reducedMotion="user"` + `useReducedMotion` memenuhi aksesibilitas prefers-reduced-motion secara global.
+* Prinsip penggunaan (dari paling ringan): Tailwind/CSS untuk micro interaction → **Motion** untuk UI animation → Rive untuk interactive/stateful (saat asset tersedia) → Lottie untuk ready-made visual (saat dibutuhkan) → GSAP untuk complex timeline (saat dibutuhkan).
+
+### Konsekuensi
+
+* Variant animasi terpusat di `lib/animations/motion.ts` — jangan buat konfigurasi random per komponen.
+* Komponen client kecil di `components/animations/` (MotionProvider, Reveal, AnimatedRupiah).
+* Motion hanya di-import di komponen client pada halaman authenticated — bundle halaman publik tidak terpengaruh.
+* Rive/GSAP dapat ditambahkan belakangan tanpa migrasi, sesuai kebutuhan nyata (TASK-1005).

@@ -3,8 +3,8 @@ import { z } from "zod";
 export const WALLET_TYPES = ["cash", "bank", "ewallet", "other"] as const;
 export type WalletType = (typeof WALLET_TYPES)[number];
 
-/** Nominal dalam bentuk string input form: hanya angka (boleh 1-2 desimal). */
-const amountString = z
+/** Nominal awal wallet: angka non-negatif (boleh 1-2 desimal). */
+const nonNegativeAmountString = z
   .string()
   .trim()
   .regex(/^\d+(\.\d{1,2})?$/, "Nominal tidak valid");
@@ -19,9 +19,9 @@ export const createWalletSchema = z.object({
   currency: z
     .string()
     .trim()
-    .length(3, "Kode currency 3 huruf (mis. IDR)")
+    .regex(/^[A-Za-z]{3}$/, "Kode currency 3 huruf (mis. IDR)")
     .toUpperCase(),
-  initialBalance: amountString,
+  initialBalance: nonNegativeAmountString,
 });
 
 export const updateWalletSchema = z.object({
@@ -35,7 +35,7 @@ export const updateWalletSchema = z.object({
   currency: z
     .string()
     .trim()
-    .length(3, "Kode currency 3 huruf (mis. IDR)")
+    .regex(/^[A-Za-z]{3}$/, "Kode currency 3 huruf (mis. IDR)")
     .toUpperCase(),
   isActive: z.boolean(),
 });
