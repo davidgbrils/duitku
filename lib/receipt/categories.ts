@@ -17,7 +17,8 @@ const GROUPS: KeywordGroup[] = [
       "bumbu", "kecap", "sambal", "snack", "biskuit", "keripik", "coklat",
       "permen", "indomie", "sosis", "bakso", "keju", "mentega", "santan",
       "garam", "bawang", "cabai", "kentang", "pisang", "apel", "jeruk",
-      "mangga", "kopi bubuk", "mie instan",
+      "mangga", "kopi bubuk", "mie instan", "chitato", "tango", "roma",
+      "oreo", "silverqueen", "cadbury", "beng beng", "kinder",
     ],
   },
   {
@@ -26,7 +27,8 @@ const GROUPS: KeywordGroup[] = [
       "aqua", "le mineral", "air mineral", "teh", "kopi", "susu", "soda",
       "jus", "sprite", "cola", "fanta", "pocari", "milo", "energen",
       "ultra", "frisian", "bear brand", "good day", "kapal api", "torabika",
-      "air",
+      "air", "oatside", "hydro coco", "pokka", "teh botol", "teh pucuk",
+      "frestea", "nescafe", "goldda", "floridina", "cimory", "walls",
     ],
   },
   {
@@ -34,7 +36,10 @@ const GROUPS: KeywordGroup[] = [
     keywords: [
       "sabun", "shampoo", "sampo", "pasta gigi", "sikat gigi", "deterjen",
       "rinso", "downy", "pelembut", "pembersih", "tisu", "pampers", "popok",
-      "deodoran", "parfum", "losion", "pembalut", "sabun cuci",
+      "deodoran", "parfum", "losion", "pembalut", "sabun cuci", "giv",
+      "rxna", "rexona", "biore", "dettol", "lifebuoy", "lux", "dove",
+      "pepsodent", "closeup", "soklin", "attack", "molto", "sensodyne",
+      "wardah", "kahf", "garnier", "vaseline", "nivea", "gatsby",
     ],
   },
   {

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const productLinks = [
@@ -13,11 +14,15 @@ export function LandingFooter() {
     <footer className="border-border border-t">
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 px-4 py-10 sm:flex-row sm:items-start sm:justify-between">
         <div className="text-center sm:text-left">
-          <p className="text-primary text-lg font-semibold tracking-tight">
-            DUITKU
-          </p>
-          <p className="text-muted-foreground mt-1 max-w-xs text-sm">
-            Personal finance tracking yang sederhana.
+          <Image
+            src="/images/brand/logo_light.png"
+            alt="Duitku Logo"
+            width={130}
+            height={36}
+            className="h-8 w-auto mx-auto sm:mx-0 object-contain"
+          />
+          <p className="text-muted-foreground mt-2 max-w-xs text-sm">
+            Personal finance tracking yang sederhana & terpercaya.
           </p>
         </div>
 

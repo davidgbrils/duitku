@@ -9,9 +9,18 @@ const fontSans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Duitku",
+  title: "Duitku — Kelola Keuanganmu, Lebih Sederhana",
   description:
-    "Duitku — aplikasi pencatatan keuangan pribadi. Catat pemasukan, pengeluaran, dan saldo wallet dalam satu tempat.",
+    "Duitku — aplikasi pencatatan keuangan pribadi. Catat pemasukan, pengeluaran, transfer, dan scan struk dalam satu tempat.",
+  icons: {
+    icon: [
+      { url: "/images/brand/favicon_32.png", sizes: "32x32", type: "image/png" },
+      { url: "/images/brand/favicon_192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/images/brand/app_icon_light.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

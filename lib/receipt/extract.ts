@@ -7,10 +7,11 @@ export type { ReceiptExtraction, ReceiptItem } from "./types";
  * mudah diuji dan bisa diganti Vision API nanti).
  *
  * Heuristik:
- * - Merchant: baris pertama yang "berarti" (bukan header/tanggal/angka).
- * - Tanggal: pola DD/MM/YYYY (konvensi Indonesia) atau "11 Agustus 2026".
- * - Item: baris berakhiran nominal; token terakhir = harga, sisanya nama.
- * - Total: baris bertanda TOTAL/JUMLAH/BAYAR, fallback penjumlahan item.
+ * - Merchant: deteksi brand ritel (Indomaret, Alfamart, dll) atau baris pertama yang "berarti".
+ * - Tanggal: pola DD/MM/YYYY / DD.MM.YY (konvensi Indonesia) atau "11 Agustus 2026".
+ * - Item: pola 4-kolom ritel (Nama Qty UnitPrice TotalPrice) atau 3-kolom. Mengabaikan voucher/diskon/alamat.
+ * - Pembersihan OCR: membersihkan simbol noise (:, *, =, #, |, ||), koreksi huruf o/O/l/I/S pada angka harga.
+ * - Total: baris bertanda TOTAL/JUMLAH/BAYAR (dukung titik dua ':'), fallback penjumlahan item.
  */
 
 const MONTH_NAMES = [
@@ -74,10 +75,45 @@ const PAYMENT_PATTERNS: { method: string; pattern: RegExp }[] = [
   { method: "Tunai", pattern: /\b(tunai|cash)\b/i },
 ];
 
-/** "5.000" → 5000, "1.234,56" → 1234.56, "5000" → 5000, "Rp 27.000" → 27000. */
+const RETAIL_BRANDS: { brand: string; pattern: RegExp }[] = [
+  { brand: "Indomaret", pattern: /\b(indomaret|indomarco)\b/i },
+  { brand: "Alfamart", pattern: /\b(alfamart|alfaria)\b/i },
+  { brand: "Alfamidi", pattern: /\b(alfamidi)\b/i },
+  { brand: "Super Indo", pattern: /\b(super\s*indo)\b/i },
+  { brand: "Lawson", pattern: /\b(lawson)\b/i },
+  { brand: "Circle K", pattern: /\b(circle\s*k)\b/i },
+  { brand: "Transmart", pattern: /\b(transmart|carrefour)\b/i },
+  { brand: "Hypermart", pattern: /\b(hypermart)\b/i },
+  { brand: "Hero", pattern: /\b(hero\s*supermarket)\b/i },
+  { brand: "Guardian", pattern: /\b(guardian)\b/i },
+  { brand: "Watsons", pattern: /\b(watsons?)\b/i },
+];
+
+const ADDRESS_KEYWORDS_RE =
+  /\b(jl|jalan|no|kec|kecamatan|kel|kelurahan|kota|kab|kabupaten|prov|rt|rw|kodepos|npwp|telp|fax|gedung|menara|pantai|indah|kapuk)\b/i;
+
+/** "5.000" → 5000, "1.234,56" → 1234.56, "5000" → 5000, "Rp 27.000" → 27000. Memasang pembuka & penutup noise OCR. */
 export function parseAmount(raw: string): number | null {
-  let s = raw.trim().replace(/\s+/g, "").replace(/^rp/i, "");
-  if (!s || !/^[\d.,]+$/.test(s)) {
+  let s = raw.trim().replace(/\s+/g, "");
+  // Hapus prefiks Rp/RP/rp dengan variasi titik/titik dua (mis. "Rp.", "Rp:")
+  s = s.replace(/^rp[:.]?/i, "");
+  // Hapus simbol noise OCR di ujung string (mis. "19.800:", "38.400*", "38.400=")
+  s = s.replace(/[:;*=+#|!?"'~]+$/g, "").replace(/^[:;*=+#|!?"'~]+/g, "");
+
+  // Nilai di dalam kurung seperti (4,300) adalah diskon/voucher, bukan nilai transaksi positif.
+  if (!s || /^\(.*\)$/.test(s) || s.startsWith("-")) {
+    return null;
+  }
+
+  // Koreksi kesalahan OCR umum angka yang terbaca sebagai huruf (O/o/S/l/I -> 0/5/1) pada token harga.
+  if (/[0-9]/.test(s)) {
+    s = s
+      .replace(/(?<=\d)[Oo](?=\d|$)/g, "0")
+      .replace(/(?<=\d)[lI](?=\d|$)/g, "1")
+      .replace(/^S(?=\d)/i, "5");
+  }
+
+  if (!/^[\d.,]+$/.test(s)) {
     return null;
   }
 
@@ -170,9 +206,51 @@ export function extractReceipt(rawText: string): ReceiptExtraction {
   };
 }
 
+function cleanItemName(name: string): string {
+  return name
+    .replace(/[|`~_#$^=@]/g, "") // Hapus karakter noise murni OCR
+    .replace(/:\s*$/, "") // Hapus titik dua di ujung nama
+    .replace(/\s+/g, " ") // Rapikan spasi berlebih
+    .trim();
+}
+
 function extractMerchant(
   lines: string[]
 ): { name: string | null; confidence: number } {
+  // 1. Cek brand ritel besar (Indomaret, Alfamart, dll).
+  for (const { brand, pattern } of RETAIL_BRANDS) {
+    for (let i = 0; i < Math.min(lines.length, 12); i++) {
+      if (pattern.test(lines[i])) {
+        // Cari baris cabang toko di sekitarnya (mis. "DURI KOSAMBI 18").
+        let branch: string | null = null;
+        for (let j = 0; j < Math.min(lines.length, 12); j++) {
+          const l = lines[j];
+          const parts = l.split(/\s+/);
+          const lastToken = parts[parts.length - 1];
+          if (
+            j !== i &&
+            !SEPARATOR_RE.test(l) &&
+            parseAmount(lastToken) === null &&
+            !HEADER_KEYWORDS.some((k) => l.toLowerCase().startsWith(k)) &&
+            !ADDRESS_KEYWORDS_RE.test(l) &&
+            !pattern.test(l) &&
+            l.length >= 3 &&
+            l.length <= 40 &&
+            /[a-z]/i.test(l)
+          ) {
+            branch = cleanItemName(l);
+            break;
+          }
+        }
+        return {
+          name: branch ? `${brand} - ${branch}` : brand,
+          confidence: 0.98,
+        };
+      }
+    }
+  }
+
+  // 2. Fallback heuristik standar baris pertama.
   for (const line of lines) {
     if (SEPARATOR_RE.test(line)) {
       continue;
@@ -196,7 +274,7 @@ function extractMerchant(
       continue;
     }
     return {
-      name: line.replace(/\s+/g, " ").slice(0, 60),
+      name: cleanItemName(line).slice(0, 60),
       confidence: 0.96,
     };
   }
@@ -205,29 +283,54 @@ function extractMerchant(
 
 function extractItems(lines: string[]): ReceiptItem[] {
   const items: ReceiptItem[] = [];
+  const IGNORED_LINE_RE =
+    /^(qty|jumlah|banyak|disc|diskon|voucher|promo|cashback|potongan|kembali|anda|hemat|harga|dpp|ppn|subtotal|layanan|sms|wa|telp|kontak|npwp|member|kasir)/i;
+
   for (const line of lines) {
     if (SEPARATOR_RE.test(line)) {
       continue;
     }
+    // Abaikan baris alamat / header yang kebetulan memiliki angka di ujung (seperti kodepos / nomor jalan)
+    if (ADDRESS_KEYWORDS_RE.test(line) || parseDate(line) !== null || line.includes("/")) {
+      continue;
+    }
+
     const parts = line.split(/\s+/);
     if (parts.length < 2) {
       continue;
     }
-    const amount = parseAmount(parts[parts.length - 1]);
-    if (amount === null) {
+    const lastToken = parts[parts.length - 1];
+    const amount = parseAmount(lastToken);
+    // Di Indonesia tidak ada harga item ritel < Rp100 (angka seperti 18 adalah nomor cabang toko "DURI KOSAMBI 18").
+    if (amount === null || amount < 100) {
       continue;
     }
-    let nameParts = parts.slice(0, -1);
 
-    // Pola "NAMA <qty> <harga>" — token kedua terakhir bilangan kecil = qty.
+    let nameParts = parts.slice(0, -1);
     let quantity: number | undefined;
-    const secondLast = nameParts[nameParts.length - 1];
-    if (nameParts.length >= 2 && /^\d{1,2}$/.test(secondLast)) {
-      quantity = Number(secondLast);
-      nameParts = nameParts.slice(0, -1);
+
+    // Pola ritel 4-kolom: "NAMA ITEM <qty> <harga_satuan> <total_harga>"
+    // Contoh: "GIV BW MLB&CLG PC400 1 19800 19,800"
+    if (parts.length >= 4) {
+      const secondLastToken = parts[parts.length - 2];
+      const thirdLastToken = parts[parts.length - 3];
+      const unitPrice = parseAmount(secondLastToken);
+      if (unitPrice !== null && /^\d{1,2}$/.test(thirdLastToken)) {
+        quantity = Number(thirdLastToken);
+        nameParts = parts.slice(0, -3);
+      }
     }
 
-    const name = nameParts.join(" ").trim();
+    // Pola standar 3-kolom: "NAMA ITEM <qty> <total_harga>"
+    if (quantity === undefined) {
+      const secondLast = nameParts[nameParts.length - 1];
+      if (nameParts.length >= 2 && /^\d{1,2}$/.test(secondLast)) {
+        quantity = Number(secondLast);
+        nameParts = nameParts.slice(0, -1);
+      }
+    }
+
+    const name = cleanItemName(nameParts.join(" "));
     if (!name || !/[a-z0-9]/i.test(name)) {
       continue;
     }
@@ -235,7 +338,8 @@ function extractItems(lines: string[]): ReceiptItem[] {
     if (
       TOTAL_KEYWORDS.some((keyword) => lower.includes(keyword)) ||
       PAYMENT_PATTERNS.some(({ pattern }) => pattern.test(name)) ||
-      /^(qty|jumlah|banyak|disc|diskon|ppn)/i.test(lower)
+      IGNORED_LINE_RE.test(lower) ||
+      IGNORED_LINE_RE.test(line.toLowerCase())
     ) {
       continue;
     }

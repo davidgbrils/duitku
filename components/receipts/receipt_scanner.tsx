@@ -2,7 +2,19 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Loader2, ScanLine } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  FileSearch,
+  ImagePlus,
+  Loader2,
+  Maximize2,
+  RefreshCw,
+  ScanLine,
+  ShoppingBag,
+  Sparkles,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 import { createTransactionAction } from "@/actions/transactions";
 import { Button } from "@/components/ui/button";
@@ -38,12 +50,10 @@ type Category = Database["public"]["Tables"]["categories"]["Row"];
 type Step = "upload" | "processing" | "review";
 
 /**
- * Scan struk belanja (TASK tambahan user):
- * upload foto → OCR Tesseract (di browser, tanpa kirim gambar ke server)
- * → ekstraksi data + confidence → layar Review & Confirm → simpan transaksi.
- *
- * Hasil OCR TIDAK pernah langsung disimpan: user selalu bisa mengedit
- * merchant, tanggal, nominal, kategori, dan wallet sebelum konfirmasi.
+ * Scan Struk Belanja (OCR Client-Side & Interactive Mobile Dialog):
+ * - 100% Bahasa Indonesia untuk seluruh label, deskripsi, dan bantuan.
+ * - Pembacaan karakter & simbol presisi (suport OCR noise cleaning).
+ * - UI Modal Interaktif & Responsif di semua ukuran layar mobile (iOS & Android).
  */
 export function ReceiptScannerDialog({
   wallets,
@@ -62,7 +72,11 @@ export function ReceiptScannerDialog({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, startTransition] = useTransition();
 
-  // Field yang bisa diedit user di layar Review.
+  // State tampilan interaktif
+  const [showImagePreview, setShowImagePreview] = useState(true);
+  const [showItemsList, setShowItemsList] = useState(true);
+
+  // Field formulir transaksi yang dapat diedit user di layar Review
   const [merchant, setMerchant] = useState("");
   const [transactionDate, setTransactionDate] = useState("");
   const [amount, setAmount] = useState("");
@@ -72,7 +86,6 @@ export function ReceiptScannerDialog({
 
   const activeWallets = wallets.filter((wallet) => wallet.is_active);
 
-  // Base UI hanya menampilkan label bila `items` diberikan ke Root.
   const expenseCategoryItems = {
     [NO_CATEGORY_VALUE]: "Tanpa Kategori",
     ...Object.fromEntries(
@@ -90,6 +103,8 @@ export function ReceiptScannerDialog({
     setImageUrl(null);
     setExtraction(null);
     setError(null);
+    setShowImagePreview(true);
+    setShowItemsList(true);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -97,15 +112,16 @@ export function ReceiptScannerDialog({
 
   async function handleFile(file: File) {
     if (!file.type.startsWith("image/")) {
-      setError("Pilih file gambar (JPG atau PNG).");
+      setError("Format file tidak didukung. Silakan pilih gambar (JPG, PNG, atau WebP).");
       return;
     }
     setError(null);
     const url = URL.createObjectURL(file);
     setImageUrl(url);
     setStep("processing");
+
     try {
-      // OCR dimuat lazily agar bundle awal tetap kecil.
+      // OCR Tesseract dimuat secara lazy (dynamic import)
       const { createWorker } = await import("tesseract.js");
       const worker = await createWorker("ind");
       const { data } = await worker.recognize(url);
@@ -128,12 +144,12 @@ export function ReceiptScannerDialog({
       setCategoryId(category.categoryId ?? NO_CATEGORY_VALUE);
       setWalletId(activeWallets[0]?.id ?? "");
       setDescription(
-        base.merchantName ? `Struk ${base.merchantName}` : "Struk belanja"
+        base.merchantName ? `Struk ${base.merchantName}` : "Pembelian dari struk belanja"
       );
       setStep("review");
     } catch {
       setError(
-        "Gagal membaca struk. Coba lagi dengan foto yang lebih terang, lurus, dan fokus."
+        "Sistem tidak dapat membaca teks struk. Pastikan foto struk cukup terang, tidak buram, dan tegak lurus."
       );
       setStep("upload");
     }
@@ -142,18 +158,19 @@ export function ReceiptScannerDialog({
   function handleSave() {
     setError(null);
     if (!walletId) {
-      setError("Pilih wallet terlebih dahulu.");
+      setError("Silakan pilih dompet/rekening sumber pembayaran terlebih dahulu.");
       return;
     }
     const total = Number(amount);
     if (!Number.isFinite(total) || total <= 0) {
-      setError("Nominal tidak valid.");
+      setError("Nominal total pembayaran tidak valid.");
       return;
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(transactionDate)) {
-      setError("Tanggal tidak valid.");
+      setError("Format tanggal transaksi tidak valid.");
       return;
     }
+
     startTransition(async () => {
       const result = await createTransactionAction({
         type: "expense",
@@ -185,228 +202,305 @@ export function ReceiptScannerDialog({
     >
       <DialogTrigger
         render={
-          <Button variant="outline">
-            <ScanLine />
-            Scan Struk
+          <Button variant="outline" className="gap-2 shadow-sm">
+            <ScanLine className="size-4" />
+            Pindai Struk
           </Button>
         }
       />
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {step === "review" ? "Review Transaksi" : "Scan Struk"}
+
+      <DialogContent className="max-w-lg w-[95vw] sm:w-full max-h-[92dvh] flex flex-col p-4 sm:p-6 overflow-hidden rounded-2xl">
+        <DialogHeader className="shrink-0 pb-2">
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold">
+            <Sparkles className="text-primary size-5" />
+            {step === "review" ? "Hasil Pembacaan Struk" : "Pindai Struk Belanja"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
             {step === "review"
-              ? "Periksa hasil pembacaan sebelum disimpan — OCR bisa salah baca."
-              : "Foto struk belanja, Duitku akan membacanya otomatis."}
+              ? "Periksa & sesuaikan rincian transaksi sebelum disimpan ke dompet Anda."
+              : "Unggah foto struk belanjaan Anda. Pemrosesan OCR dilakukan secara privat di HP Anda."}
           </DialogDescription>
         </DialogHeader>
 
-        {step === "upload" && (
-          <div className="grid gap-3">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="hover:bg-muted/50 flex flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors"
-            >
-              <ImagePlus className="text-muted-foreground size-8" />
-              <p className="text-sm font-medium">Pilih atau foto struk</p>
-              <p className="text-muted-foreground text-xs">
-                JPG atau PNG · OCR berjalan di browser kamu, gambar tidak
-                dikirim ke server
-              </p>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              capture="environment"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) {
-                  handleFile(file);
-                }
-              }}
-            />
-            {error && <ErrorBanner message={error} />}
-          </div>
-        )}
-
-        {step === "processing" && (
-          <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <Loader2 className="text-primary size-8 animate-spin" />
-            <p className="text-sm font-medium">Membaca struk...</p>
-            <p className="text-muted-foreground text-xs">
-              Ekstraksi merchant, tanggal, item, dan total
-            </p>
-          </div>
-        )}
-
-        {step === "review" && extraction && (
-          <div className="grid gap-4">
-            {imageUrl && (
-              <div className="bg-muted flex justify-center rounded-lg p-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imageUrl}
-                  alt="Pratinjau struk"
-                  className="max-h-40 rounded-md object-contain"
+        <div className="flex-1 overflow-y-auto pr-1 py-1 grid gap-4 custom-scrollbar">
+          <AnimatePresence mode="wait">
+            {step === "upload" && (
+              <motion.div
+                key="upload-step"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="grid gap-4 py-2"
+              >
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="hover:bg-muted/50 focus:ring-2 focus:ring-primary focus:outline-none flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-primary/30 bg-muted/20 px-4 py-12 text-center transition-all cursor-pointer"
+                >
+                  <div className="rounded-full bg-primary/10 p-4 text-primary">
+                    <ImagePlus className="size-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      Ambil Foto atau Pilih Gambar Struk
+                    </p>
+                    <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                      Mendukung format JPG, PNG, WebP · Gambar diolah langsung di HP Anda (Aman & Privat)
+                    </p>
+                  </div>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) {
+                      handleFile(file);
+                    }
+                  }}
                 />
-              </div>
+                {error && <ErrorBanner message={error} />}
+              </motion.div>
             )}
 
-            <FieldRow label="Merchant" confidence={extraction.confidence.merchant}>
-              <Input
-                value={merchant}
-                onChange={(event) => setMerchant(event.target.value)}
-                placeholder="Nama toko/merchant"
-              />
-            </FieldRow>
-
-            <div className="grid grid-cols-2 gap-3">
-              <FieldRow label="Tanggal" confidence={extraction.confidence.date}>
-                <Input
-                  type="date"
-                  value={transactionDate}
-                  onChange={(event) =>
-                    setTransactionDate(event.target.value)
-                  }
-                />
-              </FieldRow>
-              <FieldRow label="Total" confidence={extraction.confidence.total}>
-                <Input
-                  inputMode="numeric"
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                  placeholder="0"
-                  className="text-base font-semibold"
-                />
-              </FieldRow>
-            </div>
-
-            <FieldRow
-              label="Kategori"
-              confidence={extraction.confidence.category}
-            >
-              <Select
-                value={categoryId}
-                onValueChange={(value) =>
-                  setCategoryId(value ?? NO_CATEGORY_VALUE)
-                }
-                items={expenseCategoryItems}
+            {step === "processing" && (
+              <motion.div
+                key="processing-step"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center justify-center gap-4 py-12 text-center"
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NO_CATEGORY_VALUE}>
-                    Tanpa Kategori
-                  </SelectItem>
-                  {categories
-                    .filter((category) => category.type === "expense")
-                    .map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </FieldRow>
-
-            <div className="grid gap-1.5">
-              <Label>Wallet</Label>
-              <Select
-                value={walletId}
-                onValueChange={(value) => setWalletId(value ?? "")}
-                items={walletItems}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih wallet" />
-                </SelectTrigger>
-                <SelectContent>
-                  {activeWallets.map((wallet) => (
-                    <SelectItem key={wallet.id} value={wallet.id}>
-                      {wallet.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {extraction.items.length > 0 && (
-              <div className="bg-muted/50 rounded-lg px-3 py-2 text-sm">
-                <p className="text-muted-foreground mb-1 text-xs font-medium">
-                  Item terbaca ({extraction.items.length})
-                </p>
-                <ul className="grid gap-0.5">
-                  {extraction.items.slice(0, 8).map((item, index) => (
-                    <li key={index} className="flex justify-between gap-2">
-                      <span className="truncate">
-                        {item.name}
-                        {item.quantity ? ` × ${item.quantity}` : ""}
-                      </span>
-                      <span className="shrink-0 font-medium">
-                        {formatRupiah(item.amount)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                {extraction.items.length > 8 && (
-                  <p className="text-muted-foreground text-xs">
-                    +{extraction.items.length - 8} item lainnya
+                <div className="relative">
+                  <div className="size-16 rounded-full bg-primary/10 animate-ping absolute inset-0" />
+                  <div className="size-16 rounded-full bg-primary/20 flex items-center justify-center relative">
+                    <Loader2 className="text-primary size-8 animate-spin" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-base font-semibold text-foreground">
+                    Sedang Membaca Teks Struk...
                   </p>
-                )}
-              </div>
+                  <p className="text-xs text-muted-foreground max-w-xs">
+                    Ekstraksi otomatis nama toko, tanggal, item barang, total pembayaran & kategori.
+                  </p>
+                </div>
+              </motion.div>
             )}
 
-            <div className="grid gap-1.5">
-              <Label htmlFor="receipt-description">Deskripsi</Label>
-              <Textarea
-                id="receipt-description"
-                rows={2}
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-              />
-            </div>
-
-            {extraction.paymentMethod && (
-              <p className="text-muted-foreground text-xs">
-                Pembayaran terdeteksi: {extraction.paymentMethod}
-              </p>
-            )}
-
-            {error && <ErrorBanner message={error} />}
-
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  reset();
-                  setStep("upload");
-                }}
-                disabled={isSaving}
+            {step === "review" && extraction && (
+              <motion.div
+                key="review-step"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="grid gap-4"
               >
-                Pindai Ulang
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex-1"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="animate-spin" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  "Simpan Transaksi"
+                {/* Pratinjau Gambar Interaktif */}
+                {imageUrl && (
+                  <div className="rounded-xl border bg-muted/40 overflow-hidden transition-all">
+                    <button
+                      type="button"
+                      onClick={() => setShowImagePreview(!showImagePreview)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/60 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Maximize2 className="size-3.5" />
+                        Pratinjau Foto Struk
+                      </span>
+                      {showImagePreview ? (
+                        <ChevronUp className="size-4" />
+                      ) : (
+                        <ChevronDown className="size-4" />
+                      )}
+                    </button>
+                    {showImagePreview && (
+                      <div className="p-2 border-t bg-black/5 flex justify-center max-h-48 overflow-auto">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imageUrl}
+                          alt="Pratinjau struk belanja"
+                          className="max-h-44 rounded-md object-contain shadow-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
-              </Button>
-            </div>
+
+                {/* Form Rincian Transaksi */}
+                <FieldRow label="Nama Toko / Merchant" confidence={extraction.confidence.merchant}>
+                  <Input
+                    value={merchant}
+                    onChange={(event) => setMerchant(event.target.value)}
+                    placeholder="Contoh: Indomaret, Alfamart, Warung Makan"
+                    className="h-10 text-sm"
+                  />
+                </FieldRow>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <FieldRow label="Tanggal Transaksi" confidence={extraction.confidence.date}>
+                    <Input
+                      type="date"
+                      value={transactionDate}
+                      onChange={(event) => setTransactionDate(event.target.value)}
+                      className="h-10 text-sm"
+                    />
+                  </FieldRow>
+                  <FieldRow label="Total Belanja (Rp)" confidence={extraction.confidence.total}>
+                    <Input
+                      inputMode="numeric"
+                      value={amount}
+                      onChange={(event) => setAmount(event.target.value)}
+                      placeholder="0"
+                      className="h-10 text-sm font-semibold text-primary"
+                    />
+                  </FieldRow>
+                </div>
+
+                <FieldRow label="Kategori Pengeluaran" confidence={extraction.confidence.category}>
+                  <Select
+                    value={categoryId}
+                    onValueChange={(value) => setCategoryId(value ?? NO_CATEGORY_VALUE)}
+                    items={expenseCategoryItems}
+                  >
+                    <SelectTrigger className="w-full h-10 text-sm">
+                      <SelectValue placeholder="Pilih kategori pengeluaran" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NO_CATEGORY_VALUE}>Tanpa Kategori</SelectItem>
+                      {categories
+                        .filter((category) => category.type === "expense")
+                        .map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </FieldRow>
+
+                <div className="grid gap-1.5">
+                  <Label className="text-xs font-semibold text-foreground">
+                    Dompet / Rekening Pembayaran
+                  </Label>
+                  <Select
+                    value={walletId}
+                    onValueChange={(value) => setWalletId(value ?? "")}
+                    items={walletItems}
+                  >
+                    <SelectTrigger className="w-full h-10 text-sm">
+                      <SelectValue placeholder="Pilih sumber dompet" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {activeWallets.map((wallet) => (
+                        <SelectItem key={wallet.id} value={wallet.id}>
+                          {wallet.name} ({formatRupiah(Number(wallet.current_balance))})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Daftar Barang Terbaca (Collapsible Accordion) */}
+                {extraction.items.length > 0 && (
+                  <div className="rounded-xl border bg-muted/30 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setShowItemsList(!showItemsList)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <ShoppingBag className="size-3.5 text-primary" />
+                        Daftar Barang Terbaca ({extraction.items.length} Item)
+                      </span>
+                      {showItemsList ? (
+                        <ChevronUp className="size-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="size-4 text-muted-foreground" />
+                      )}
+                    </button>
+
+                    {showItemsList && (
+                      <div className="p-3 border-t bg-background/50 grid gap-1.5 max-h-40 overflow-y-auto custom-scrollbar">
+                        {extraction.items.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between gap-2 text-xs py-1 px-2 rounded-md hover:bg-muted/40"
+                          >
+                            <span className="truncate font-medium text-foreground">
+                              {item.name}
+                              {item.quantity ? ` (${item.quantity}×)` : ""}
+                            </span>
+                            <span className="shrink-0 font-semibold text-muted-foreground">
+                              {formatRupiah(item.amount)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="receipt-description" className="text-xs font-semibold text-foreground">
+                    Catatan / Deskripsi Transaksi
+                  </Label>
+                  <Textarea
+                    id="receipt-description"
+                    rows={2}
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Tambah catatan transaksi struk ini..."
+                    className="text-sm resize-none"
+                  />
+                </div>
+
+                {extraction.paymentMethod && (
+                  <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-xs font-medium text-primary">
+                    <FileSearch className="size-4 shrink-0" />
+                    <span>Metode Pembayaran Terdeteksi: <strong>{extraction.paymentMethod}</strong></span>
+                  </div>
+                )}
+
+                {error && <ErrorBanner message={error} />}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Footer Tombol Aksi Interaktif (Sticky di Layar Mobile) */}
+        {step === "review" && (
+          <div className="shrink-0 pt-3 border-t mt-1 flex flex-col sm:flex-row gap-2 bg-background">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                reset();
+                setStep("upload");
+              }}
+              disabled={isSaving}
+              className="w-full sm:w-auto gap-2"
+            >
+              <RefreshCw className="size-4" />
+              Foto Ulang
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full sm:flex-1 gap-2 font-semibold shadow-md"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Menyimpan Transaksi...
+                </>
+              ) : (
+                "Simpan Transaksi Struk"
+              )}
+            </Button>
           </div>
         )}
       </DialogContent>
@@ -426,7 +520,7 @@ function FieldRow({
   return (
     <div className="grid gap-1.5">
       <div className="flex items-center justify-between">
-        <Label>{label}</Label>
+        <Label className="text-xs font-semibold text-foreground">{label}</Label>
         <ConfidenceBadge value={confidence} />
       </div>
       {children}
@@ -441,27 +535,35 @@ function ConfidenceBadge({ value }: { value: number }) {
   const percent = Math.round(value * 100);
   const tone =
     value >= 0.9
-      ? "bg-success/10 text-success"
+      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
       : value >= 0.7
-        ? "bg-warning/10 text-warning"
-        : "bg-destructive/10 text-destructive";
+        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20";
+
+  const labelText =
+    value >= 0.9
+      ? `Akurasi Tinggi (${percent}%)`
+      : value >= 0.7
+        ? `Akurasi Cukup (${percent}%)`
+        : `Perlu Diperiksa (${percent}%)`;
+
   return (
     <span
-      title="Tingkat keyakinan hasil pembacaan"
-      className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", tone)}
+      title={`Tingkat keyakinan hasil pembacaan OCR (${percent}%)`}
+      className={cn("rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-tight", tone)}
     >
-      {percent}%
+      {labelText}
     </span>
   );
 }
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <p
+    <div
       role="alert"
-      className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm"
+      className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-3 py-2 text-xs font-medium"
     >
       {message}
-    </p>
+    </div>
   );
 }

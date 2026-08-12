@@ -54,4 +54,18 @@ describe("detectCategory", () => {
     expect(result.categoryId).toBeNull();
     expect(result.confidence).toBeLessThan(0.8);
   });
+
+  it("mendeteksi kategori Kebersihan untuk brand GIV dan REXONA/RXNA", () => {
+    const HYGIENE_ID = "55555555-5555-5555-8555-555555555555";
+    const customCategories = [
+      ...categories,
+      { id: HYGIENE_ID, name: "Kebersihan & Perawatan", type: "expense" },
+    ];
+    const result = detectCategory(
+      ["GIV BW MLB&CLG PC400", "RXNA MEN INV+A.BC 45"],
+      customCategories
+    );
+    expect(result.categoryId).toBe(HYGIENE_ID);
+    expect(result.categoryName).toBe("Kebersihan & Perawatan");
+  });
 });

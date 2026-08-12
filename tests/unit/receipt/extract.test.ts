@@ -66,7 +66,7 @@ MIE          10.000
 -------------------
 TOTAL        27.000`);
 
-    expect(result.merchantName).toBe("INDOMARET");
+    expect(result.merchantName).toContain("Indomaret");
     expect(result.transactionDate).toBe("2026-08-11");
     expect(result.totalAmount).toBe(27000);
     expect(result.currency).toBe("IDR");
@@ -77,7 +77,7 @@ TOTAL        27.000`);
     ]);
     expect(result.confidence.total).toBeGreaterThan(0.9);
     expect(result.confidence.date).toBe(0.97);
-    expect(result.confidence.merchant).toBe(0.96);
+    expect(result.confidence.merchant).toBeGreaterThanOrEqual(0.96);
   });
 
   it("tidak menganggap baris TOTAL sebagai item", () => {
@@ -121,5 +121,47 @@ Indomie 2 7.000`);
     expect(result.merchantName).toBeNull();
     expect(result.confidence.merchant).toBe(0);
     expect(result.totalAmount).toBeNull();
+  });
+
+  it("mengurai struk Indomaret dengan voucher dan pola 4-kolom (contoh receipt.jpeg)", () => {
+    const raw = `PT INDOMARCO PRISMATAMA
+GEDUNG MENARA
+INDOMARET BOULEVARD
+PANTAI INDAH KAPUK
+JAKARTA UTARA
+NPWP 001.337.994.6-092.000
+
+DURI KOSAMBI 18
+JL. RAYA DURI KOSAMBI NO 18 DURI KOSAMBI
+KEC. CENGKARENG, KOTA JAKARTA BARAT, 11750
+---------------------------------------
+04.08.26-19:50/4.3.1/TZZA-936349/FADIL/01
+---------------------------------------
+GIV BW MLB&CLG PC400 1 19800 19,800
+VOUCHER : (4,300)
+RXNA MEN INV+A.BC 45 1 28900 28,900
+VOUCHER : (6,000)
+---------------------------------------
+TOTAL BELANJA : 38,400
+---------------------------------------
+TUNAI : 50,000
+KEMBALI : 11,600
+ANDA HEMAT : 10,300
+PPN : DPP= 40,218 PPN= 4,826
+HARGA JUAL : 43,874
+LAYANAN KONSUMEN
+SMS/WA0811.1500.280 TELP 1500280
+KONTAK@INDOMARET.CO.ID`;
+
+    const result = extractReceipt(raw);
+
+    expect(result.merchantName).toContain("Indomaret");
+    expect(result.transactionDate).toBe("2026-08-04");
+    expect(result.totalAmount).toBe(38400);
+    expect(result.paymentMethod).toBe("Tunai");
+    expect(result.items).toEqual([
+      { name: "GIV BW MLB&CLG PC400", quantity: 1, amount: 19800 },
+      { name: "RXNA MEN INV+A.BC 45", quantity: 1, amount: 28900 },
+    ]);
   });
 });

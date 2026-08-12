@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
+import Image from "next/image";
+
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
@@ -52,9 +54,16 @@ export function LandingNavbar() {
       >
         <Link
           href="/"
-          className="text-primary text-lg font-semibold tracking-tight"
+          className="focus-visible:ring-ring rounded-lg focus-visible:ring-2 focus-visible:outline-none"
         >
-          DUITKU
+          <Image
+            src="/images/brand/logo_light.png"
+            alt="Duitku Logo"
+            width={140}
+            height={40}
+            className="h-8 w-auto object-contain"
+            priority
+          />
         </Link>
 
         <nav
