@@ -104,10 +104,34 @@ export function LandingNavbar() {
           {open && (
             <div
               id="landing-nav-menu"
-              className="bg-card ring-border absolute top-full right-0 z-50 mt-2 w-56 origin-top-right rounded-xl p-2 shadow-lg ring-1 animate-in fade-in-0 zoom-in-95 duration-100"
+              className="bg-card ring-border absolute top-full right-0 z-50 mt-2 w-60 origin-top-right rounded-2xl p-2.5 shadow-xl ring-1 animate-in fade-in-0 zoom-in-95 duration-100"
             >
+              {/* Tombol Login & Register di bagian paling atas mobile menu */}
+              <div className="grid gap-2 p-1 pb-2">
+                <Button
+                  render={
+                    <Link
+                      href="/register"
+                      onClick={() => setOpen(false)}
+                    />
+                  }
+                  className="w-full font-semibold shadow-sm"
+                >
+                  Mulai Gratis
+                </Button>
+                <Button
+                  variant="outline"
+                  render={<Link href="/login" onClick={() => setOpen(false)} />}
+                  className="w-full justify-center"
+                >
+                  Login
+                </Button>
+              </div>
+
+              <div className="border-border my-1 border-t" />
+
               <nav aria-label="Navigasi halaman">
-                <ul className="flex flex-col gap-0.5">
+                <ul className="flex flex-col gap-0.5 pt-1">
                   {navLinks.map((link) => (
                     <li key={link.href}>
                       <Link
@@ -121,27 +145,6 @@ export function LandingNavbar() {
                   ))}
                 </ul>
               </nav>
-              <div className="border-border my-2 border-t" />
-              <div className="grid gap-1.5 p-1">
-                <Button
-                  variant="ghost"
-                  render={<Link href="/login" onClick={() => setOpen(false)} />}
-                  className="w-full justify-start"
-                >
-                  Login
-                </Button>
-                <Button
-                  render={
-                    <Link
-                      href="/register"
-                      onClick={() => setOpen(false)}
-                    />
-                  }
-                  className="w-full"
-                >
-                  Mulai Gratis
-                </Button>
-              </div>
             </div>
           )}
         </div>

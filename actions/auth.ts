@@ -104,7 +104,7 @@ export async function signOutAction(): Promise<void> {
     const supabase = await createClient();
     await supabase.auth.signOut();
   } catch {
-    // Tetap arahkan ke login walau signOut gagal (sesi tidak valid).
+    // Tetap arahkan ke beranda walau signOut gagal (sesi tidak valid).
   }
-  redirect("/login");
+  redirect("/");
 }
