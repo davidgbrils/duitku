@@ -1,6 +1,10 @@
 import {
   ArrowRightLeft,
+  Banknote,
+  CreditCard,
+  HandCoins,
   LayoutDashboard,
+  PieChart,
   Receipt,
   Tags,
   Wallet,
@@ -20,4 +24,7 @@ export const navItems: NavItem[] = [
   { href: "/wallets", label: "Wallets", icon: Wallet },
   { href: "/categories", label: "Kategori", icon: Tags },
   { href: "/transfers", label: "Transfer", icon: ArrowRightLeft },
+  { href: "/debts", label: "Hutang", icon: HandCoins },
+  { href: "/receivables", label: "Piutang", icon: Banknote },
+  { href: "/budgets", label: "Anggaran", icon: PieChart },
 ];

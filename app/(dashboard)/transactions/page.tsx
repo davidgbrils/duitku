@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Reveal } from "@/components/animations/reveal";
 import { ReceiptScannerDialog } from "@/components/receipts/receipt_scanner";
 import { TransactionItem } from "@/components/transactions/transaction_item";
+import { ExportButtons } from "@/components/transactions/export_buttons";
 import { Pagination } from "@/components/shared/pagination";
 import { CreateTransactionDialog } from "@/features/transactions/transaction_form";
 import { TransactionFilters } from "@/features/transactions/transaction_filters";
@@ -132,7 +133,17 @@ export default async function TransactionsPage({
             Riwayat pemasukan dan pengeluaranmu
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <ExportButtons
+            filter={{
+              type,
+              categoryId,
+              walletId,
+              dateFrom: from,
+              dateTo: to,
+              query: q,
+            }}
+          />
           <ReceiptScannerDialog
             wallets={walletList}
             categories={categoryList}

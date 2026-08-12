@@ -223,6 +223,180 @@ export interface Database {
           },
         ];
       };
+      debts: {
+        Row: {
+          id: string;
+          user_id: string;
+          lender_name: string;
+          amount: number;
+          remaining_amount: number;
+          due_date: string | null;
+          status: "unpaid" | "partially_paid" | "paid";
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          lender_name: string;
+          amount: number;
+          remaining_amount: number;
+          due_date?: string | null;
+          status: "unpaid" | "partially_paid" | "paid";
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          lender_name?: string;
+          amount?: number;
+          remaining_amount?: number;
+          due_date?: string | null;
+          status?: "unpaid" | "partially_paid" | "paid";
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      debt_payments: {
+        Row: {
+          id: string;
+          user_id: string;
+          debt_id: string;
+          wallet_id: string;
+          amount: number;
+          payment_date: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          debt_id: string;
+          wallet_id: string;
+          amount: number;
+          payment_date: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          debt_id?: string;
+          wallet_id?: string;
+          amount?: number;
+          payment_date?: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      receivables: {
+        Row: {
+          id: string;
+          user_id: string;
+          borrower_name: string;
+          amount: number;
+          remaining_amount: number;
+          due_date: string | null;
+          status: "unpaid" | "partially_paid" | "paid";
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          borrower_name: string;
+          amount: number;
+          remaining_amount: number;
+          due_date?: string | null;
+          status: "unpaid" | "partially_paid" | "paid";
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          borrower_name?: string;
+          amount?: number;
+          remaining_amount?: number;
+          due_date?: string | null;
+          status?: "unpaid" | "partially_paid" | "paid";
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      receivable_payments: {
+        Row: {
+          id: string;
+          user_id: string;
+          receivable_id: string;
+          wallet_id: string;
+          amount: number;
+          payment_date: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          receivable_id: string;
+          wallet_id: string;
+          amount: number;
+          payment_date: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          receivable_id?: string;
+          wallet_id?: string;
+          amount?: number;
+          payment_date?: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      budgets: {
+        Row: {
+          id: string;
+          user_id: string;
+          category_id: string;
+          amount_limit: number;
+          month_year: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          category_id: string;
+          amount_limit: number;
+          month_year: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          category_id?: string;
+          amount_limit?: number;
+          month_year?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -299,6 +473,26 @@ export interface Database {
       };
       delete_transfer: {
         Args: { p_transfer_id: string };
+        Returns: undefined;
+      };
+      pay_debt: {
+        Args: {
+          p_debt_id: string;
+          p_wallet_id: string;
+          p_amount: number;
+          p_payment_date: string;
+          p_notes?: string | null;
+        };
+        Returns: undefined;
+      };
+      pay_receivable: {
+        Args: {
+          p_receivable_id: string;
+          p_wallet_id: string;
+          p_amount: number;
+          p_payment_date: string;
+          p_notes?: string | null;
+        };
         Returns: undefined;
       };
     };
