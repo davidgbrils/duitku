@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { MotionProvider } from "@/components/animations/motion_provider";
@@ -18,9 +19,16 @@ export default function DashboardLayout({
           <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
             <Link
               href="/dashboard"
-              className="text-primary text-lg font-semibold tracking-tight"
+              className="focus-visible:ring-ring rounded-lg focus-visible:ring-2 focus-visible:outline-none flex items-center gap-2"
             >
-              DUITKU
+              <Image
+                src="/images/brand/logo_light.png"
+                alt="Duitku Logo"
+                width={130}
+                height={36}
+                className="h-8 w-auto object-contain"
+                priority
+              />
             </Link>
             <nav
               className="hidden items-center gap-1 md:flex"

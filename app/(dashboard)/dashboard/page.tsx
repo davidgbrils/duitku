@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ChevronRight, PlusCircle, Wallet, Sparkles } from "lucide-react";
 
 import { Reveal } from "@/components/animations/reveal";
 import {
@@ -11,7 +13,9 @@ import {
   type MonthlyTrendPoint,
 } from "@/components/dashboard/monthly_trend_chart";
 import { SummaryCards } from "@/components/dashboard/summary_cards";
+import { ReceiptScannerDialog } from "@/components/receipts/receipt_scanner";
 import { TransactionItem } from "@/components/transactions/transaction_item";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -20,7 +24,6 @@ import {
   todayIso,
   toLocalIso,
 } from "@/lib/utils/date";
-import { ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -43,24 +46,30 @@ export default async function DashboardPage() {
     .maybeSingle();
 
   // ---- Data utama ----
-  const [{ data: wallets }, { data: transactions }, { data: recent }] =
-    await Promise.all([
-      supabase.from("wallets").select("*"),
-      supabase
-        .from("transactions")
-        .select("type, amount, transaction_date, categories(name)")
-        .gte("transaction_date", trendStartIso())
-        .lte("transaction_date", todayIso()),
-      supabase
-        .from("transactions")
-        .select("*, wallets(name), categories(name)")
-        .order("transaction_date", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(5),
-    ]);
+  const [
+    { data: wallets },
+    { data: transactions },
+    { data: recent },
+    { data: categories },
+  ] = await Promise.all([
+    supabase.from("wallets").select("*"),
+    supabase
+      .from("transactions")
+      .select("type, amount, transaction_date, categories(name)")
+      .gte("transaction_date", trendStartIso())
+      .lte("transaction_date", todayIso()),
+    supabase
+      .from("transactions")
+      .select("*, wallets(name), categories(name)")
+      .order("transaction_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("categories").select("*"),
+  ]);
 
   const walletList = wallets ?? [];
   const transactionList = transactions ?? [];
+  const categoryList = categories ?? [];
 
   const totalBalance = walletList
     .filter((wallet) => wallet.is_active)
@@ -121,22 +130,57 @@ export default async function DashboardPage() {
   );
 
   const recentList = recent ?? [];
+  const displayName = profile?.display_name || user.email?.split("@")[0] || "User";
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Selamat datang, {profile?.display_name || user.email} 👋
-        </p>
-      </div>
+      {/* ---- User Dashboard Brand Hero Banner ---- */}
+      <Reveal>
+        <div className="relative overflow-hidden rounded-3xl border bg-gradient-to-r from-primary/10 via-emerald-500/5 to-background p-5 sm:p-6 shadow-sm">
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+            <div className="flex items-center gap-4">
+              <div className="relative size-14 sm:size-16 shrink-0 rounded-2xl overflow-hidden shadow-md bg-card p-1.5 border border-primary/20">
+                <Image
+                  src="/images/brand/app_icon_light.png"
+                  alt="Duitku App Icon"
+                  width={64}
+                  height={64}
+                  className="size-full object-contain rounded-xl"
+                  priority
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                    Selamat Datang, {displayName}! 👋
+                  </h1>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5 font-medium">
+                  <Sparkles className="size-3.5 text-primary shrink-0" />
+                  <span>Kelola Keuanganmu, Lebih Sederhana.</span>
+                </p>
+              </div>
+            </div>
 
+            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+              <ReceiptScannerDialog wallets={walletList} categories={categoryList} />
+              <Button render={<Link href="/wallets" />} variant="outline" className="gap-2 shadow-sm">
+                <Wallet className="size-4" />
+                Dompet Saya
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Reveal>
+
+      {/* ---- Ringkasan Kartu ---- */}
       <SummaryCards
         totalBalance={totalBalance}
         monthIncome={monthIncome}
         monthExpense={monthExpense}
       />
 
+      {/* ---- Chart Tren & Breakdown Kategori ---- */}
       <Reveal>
         <div className="grid gap-6 lg:grid-cols-2">
           <MonthlyTrendChart data={trendData} />
@@ -144,10 +188,11 @@ export default async function DashboardPage() {
         </div>
       </Reveal>
 
+      {/* ---- Transaksi Terakhir ---- */}
       <Reveal delay={0.06}>
         <Card>
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Transaksi Terakhir</CardTitle>
+            <CardTitle className="text-lg font-bold">Transaksi Terakhir</CardTitle>
             <Link
               href="/transactions"
               className="text-primary hover:text-primary/80 flex items-center gap-0.5 text-sm font-medium transition-colors"
@@ -158,9 +203,26 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {recentList.length === 0 ? (
-              <p className="text-muted-foreground py-6 text-center text-sm">
-                Belum ada transaksi. Catat pemasukan atau pengeluaran pertamamu!
-              </p>
+              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                <div className="relative size-16 rounded-2xl overflow-hidden shadow-sm border bg-muted/30 p-2">
+                  <Image
+                    src="/images/brand/logo_icon.png"
+                    alt="Duitku Logo Icon"
+                    width={64}
+                    height={64}
+                    className="size-full object-contain opacity-80"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-foreground">Belum Ada Transaksi Tercatat</p>
+                  <p className="text-xs text-muted-foreground max-w-sm">
+                    Mulai catat pemasukan, pengeluaran, atau scan struk pertama Anda sekarang!
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <ReceiptScannerDialog wallets={walletList} categories={categoryList} />
+                </div>
+              </div>
             ) : (
               <ul className="flex flex-col gap-3">
                 {recentList.map((transaction) => (
