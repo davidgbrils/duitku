@@ -57,6 +57,9 @@ export function BudgetsClient({
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
 
   const expenseCategories = categories.filter((c) => c.type === "expense");
+  const categoryItems = Object.fromEntries(
+    expenseCategories.map((c) => [c.id, c.name])
+  );
   const [categoryId, setCategoryId] = useState("");
   const [amountLimit, setAmountLimit] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -318,6 +321,7 @@ export function BudgetsClient({
                     value={categoryId}
                     onValueChange={(val) => setCategoryId(val ?? "")}
                     disabled={Boolean(editingBudget)}
+                    items={categoryItems}
                   >
                     <SelectTrigger className="h-10 text-sm">
                       <SelectValue placeholder="Pilih kategori" />
