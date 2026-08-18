@@ -144,15 +144,17 @@ export function parseDate(text: string): string | null {
     let day = Number(numeric[1]);
     let month = Number(numeric[2]);
     let year = Number(numeric[3]);
-    // Jika salah satu jelas hari/bulan (mis. 15/08), perbaiki urutan.
+    
     if (day > 12 && month <= 12) {
       // DD/MM — sudah benar.
     } else if (month > 12 && day <= 12) {
       [day, month] = [month, day]; // MM/DD → DD/MM
     }
+    
     if (year < 100) {
       year += 2000;
     }
+    
     return toIsoDate(day, month, year);
   }
 
@@ -167,6 +169,7 @@ export function parseDate(text: string): string | null {
       ) + 1;
     return toIsoDate(Number(named[1]), month, Number(named[3]));
   }
+  
   return null;
 }
 

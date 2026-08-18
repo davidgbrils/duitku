@@ -52,7 +52,7 @@ export async function scanReceiptWithAIAction(
                 {
                   text: `Analisis foto struk belanjaan Indonesia ini. Ekstrak informasi dengan cermat dan berikan dalam format JSON terstruktur:
                   - merchantName: Nama toko/merchant (misal: Indomaret, Alfamart, Kopi Kenangan).
-                  - transactionDate: Tanggal transaksi format YYYY-MM-DD.
+                  - transactionDate: Tanggal transaksi format YYYY-MM-DD. PENTING: Format tanggal di struk Indonesia biasanya DD-MM-YY atau DD/MM/YY (contoh: 18-08-26 = 18 Agustus 2026, 15/12/25 = 15 Desember 2025). Tahun 2 digit selalu berarti 20XX (misal: 26 = 2026, 25 = 2025).
                   - totalAmount: Total pembayaran bersih (number).
                   - paymentMethod: Metode pembayaran (Tunai, QRIS, E-Wallet, Kartu Debit, Kartu Kredit).
                   - items: Daftar barang [{ name: string, quantity?: number, amount: number }].

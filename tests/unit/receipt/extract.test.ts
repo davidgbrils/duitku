@@ -40,6 +40,18 @@ describe("parseDate", () => {
 
   it("mengurai DD-MM-YY dan menganggap tahun 2 digit sebagai 20xx", () => {
     expect(parseDate("11-08-26")).toBe("2026-08-11");
+    expect(parseDate("18-08-26")).toBe("2026-08-18");
+  });
+
+  it("mengurai DD/MM/YY format (umum di struk Indonesia)", () => {
+    expect(parseDate("18/08/26")).toBe("2026-08-18");
+    expect(parseDate("15/12/25")).toBe("2025-12-15");
+    expect(parseDate("01/01/27")).toBe("2027-01-01");
+  });
+
+  it("mengurai DD.MM.YY format (dengan titik)", () => {
+    expect(parseDate("18.08.26")).toBe("2026-08-18");
+    expect(parseDate("25.12.25")).toBe("2025-12-25");
   });
 
   it("mengoreksi urutan MM/DD bila hari > 12", () => {
