@@ -40,5 +40,19 @@ export const updateWalletSchema = z.object({
   isActive: z.boolean(),
 });
 
+export const adjustWalletBalanceSchema = z.object({
+  id: z.string().uuid("ID wallet tidak valid"),
+  newBalance: z
+    .string()
+    .trim()
+    .regex(/^-?\d+(\.\d{1,2})?$/, "Nominal tidak valid (boleh negatif)")
+    .refine((val) => {
+      const num = Number(val);
+      return Number.isFinite(num);
+    }, "Nominal harus berupa angka yang valid"),
+  notes: z.string().trim().max(500, "Catatan maksimal 500 karakter").optional(),
+});
+
 export type CreateWalletInput = z.infer<typeof createWalletSchema>;
 export type UpdateWalletInput = z.infer<typeof updateWalletSchema>;
+export type AdjustWalletBalanceInput = z.infer<typeof adjustWalletBalanceSchema>;

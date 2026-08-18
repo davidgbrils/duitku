@@ -6,8 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import {
   createWalletSchema,
   updateWalletSchema,
+  adjustWalletBalanceSchema,
   type CreateWalletInput,
   type UpdateWalletInput,
+  type AdjustWalletBalanceInput,
 } from "@/lib/validations/wallet";
 
 /** Hasil action: error user-friendly untuk form. */
@@ -97,5 +99,36 @@ export async function deleteWalletAction(
   }
 
   revalidatePath("/wallets");
+  return {};
+}
+
+export async function adjustWalletBalanceAction(
+  input: AdjustWalletBalanceInput
+): Promise<WalletActionResult> {
+  const parsed = adjustWalletBalanceSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Input tidak valid." };
+  }
+
+  const newBalance = Number(parsed.data.newBalance);
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("adjust_wallet_balance", {
+      p_wallet_id: parsed.data.id,
+      p_new_balance: newBalance,
+      p_notes: parsed.data.notes || null,
+    });
+
+    if (error) {
+      console.error("adjust_wallet_balance error:", error);
+      return { error: "Gagal menyesuaikan saldo wallet. Silakan coba lagi." };
+    }
+  } catch {
+    return { error: SERVICE_UNAVAILABLE };
+  }
+
+  revalidatePath("/wallets");
+  revalidatePath("/dashboard");
   return {};
 }

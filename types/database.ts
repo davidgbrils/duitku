@@ -495,6 +495,14 @@ export interface Database {
         };
         Returns: undefined;
       };
+      adjust_wallet_balance: {
+        Args: {
+          p_wallet_id: string;
+          p_new_balance: number;
+          p_notes?: string | null;
+        };
+        Returns: undefined;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
