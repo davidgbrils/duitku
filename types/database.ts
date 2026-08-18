@@ -131,6 +131,7 @@ export interface Database {
           amount: number;
           description: string | null;
           transaction_date: string;
+          receipt_image_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -143,6 +144,7 @@ export interface Database {
           amount: number;
           description?: string | null;
           transaction_date?: string;
+          receipt_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -155,6 +157,7 @@ export interface Database {
           amount?: number;
           description?: string | null;
           transaction_date?: string;
+          receipt_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -397,6 +400,89 @@ export interface Database {
         };
         Relationships: [];
       };
+      split_bills: {
+        Row: {
+          id: string;
+          user_id: string;
+          transaction_id: string;
+          split_date: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          transaction_id: string;
+          split_date?: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          transaction_id?: string;
+          split_date?: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "split_bills_transaction_id_fkey";
+            columns: ["transaction_id"];
+            isOneToOne: true;
+            referencedRelation: "transactions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      split_bill_members: {
+        Row: {
+          id: string;
+          split_bill_id: string;
+          member_name: string;
+          amount: number;
+          is_settled: boolean;
+          receivable_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          split_bill_id: string;
+          member_name: string;
+          amount: number;
+          is_settled?: boolean;
+          receivable_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          split_bill_id?: string;
+          member_name?: string;
+          amount?: number;
+          is_settled?: boolean;
+          receivable_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "split_bill_members_split_bill_id_fkey";
+            columns: ["split_bill_id"];
+            isOneToOne: false;
+            referencedRelation: "split_bills";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "split_bill_members_receivable_id_fkey";
+            columns: ["receivable_id"];
+            isOneToOne: false;
+            referencedRelation: "receivables";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -431,6 +517,7 @@ export interface Database {
           p_amount: number;
           p_description?: string | null;
           p_transaction_date?: string | null;
+          p_receipt_image_url?: string | null;
         };
         Returns: string;
       };
@@ -443,8 +530,18 @@ export interface Database {
           p_amount: number;
           p_description?: string | null;
           p_transaction_date?: string | null;
+          p_receipt_image_url?: string | null;
         };
         Returns: undefined;
+      };
+      create_split_bill: {
+        Args: {
+          p_transaction_id: string;
+          p_members: Record<string, unknown>[];
+          p_create_receivables?: boolean;
+          p_notes?: string | null;
+        };
+        Returns: string;
       };
       delete_transaction: {
         Args: { p_tx_id: string };

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { Reveal } from "@/components/animations/reveal";
 import { ReceiptScannerDialog } from "@/components/receipts/receipt_scanner";
+import { VoiceButton } from "@/components/voice/voice_button";
 import { TransactionItem } from "@/components/transactions/transaction_item";
 import { ExportButtons } from "@/components/transactions/export_buttons";
 import { Pagination } from "@/components/shared/pagination";
@@ -144,6 +145,7 @@ export default async function TransactionsPage({
               query: q,
             }}
           />
+          <VoiceButton wallets={walletList} categories={categoryList} />
           <ReceiptScannerDialog
             wallets={walletList}
             categories={categoryList}

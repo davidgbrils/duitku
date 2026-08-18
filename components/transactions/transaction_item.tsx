@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ReceiptText } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,15 +41,20 @@ export function TransactionItem({
                 </p>
               </div>
             </div>
-            <p
-              className={
-                isIncome
-                  ? "text-success shrink-0 text-sm font-semibold"
-                  : "text-destructive shrink-0 text-sm font-semibold"
-              }
-            >
-              {formatSignedRupiah(transaction.amount, isIncome)}
-            </p>
+            <div className="flex shrink-0 items-center gap-2">
+              {transaction.receipt_image_url && (
+                <ReceiptText className="size-4 text-muted-foreground" />
+              )}
+              <p
+                className={
+                  isIncome
+                    ? "text-success text-sm font-semibold"
+                    : "text-destructive text-sm font-semibold"
+                }
+              >
+                {formatSignedRupiah(transaction.amount, isIncome)}
+              </p>
+            </div>
           </CardContent>
         </Card>
       </Link>

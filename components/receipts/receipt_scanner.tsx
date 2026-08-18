@@ -19,8 +19,11 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 
 import { scanReceiptWithAIAction } from "@/actions/receipt_ai";
+import { uploadReceiptImageAction } from "@/actions/receipt_storage";
 import { createTransactionAction } from "@/actions/transactions";
 import { Button } from "@/components/ui/button";
+import { CheckCircle2, UserPlus } from "lucide-react";
+import { SplitBillDialog } from "@/components/receipts/split_bill_dialog";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +53,7 @@ import type { Database } from "@/types/database";
 type Wallet = Database["public"]["Tables"]["wallets"]["Row"];
 type Category = Database["public"]["Tables"]["categories"]["Row"];
 
-type Step = "upload" | "processing" | "review";
+type Step = "upload" | "processing" | "review" | "saved";
 type ScanEngine = "ocr" | "ai";
 type ProcessingStep = "idle" | "validating" | "compressing" | "uploading" | "analyzing" | "extracting";
 
@@ -116,6 +119,12 @@ export function ReceiptScannerDialog({
   const [showImagePreview, setShowImagePreview] = useState(true);
   const [showItemsList, setShowItemsList] = useState(true);
 
+  // File & hasil simpan (untuk upload foto + lanjut split bill)
+  const [lastFile, setLastFile] = useState<File | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [savedTxId, setSavedTxId] = useState<string | null>(null);
+  const [savedTxAmount, setSavedTxAmount] = useState(0);
+
   // Field formulir transaksi yang dapat diedit user di layar Review
   const [merchant, setMerchant] = useState("");
   const [transactionDate, setTransactionDate] = useState("");
@@ -146,6 +155,10 @@ export function ReceiptScannerDialog({
     setProcessingStep("idle");
     setShowImagePreview(true);
     setShowItemsList(true);
+    setLastFile(null);
+    setSavedTxId(null);
+    setSavedTxAmount(0);
+    setIsUploadingPhoto(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -154,6 +167,7 @@ export function ReceiptScannerDialog({
   async function handleFile(file: File, chosenEngine: ScanEngine = scanEngine) {
     setError(null);
     setProcessingStep("validating");
+    setLastFile(file);
 
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
@@ -317,6 +331,25 @@ export function ReceiptScannerDialog({
           transactionDate,
         });
 
+        // Upload foto struk (non-blocking: jika gagal, transaksi tetap berjalan tanpa foto).
+        let receiptUrl: string | undefined;
+        if (lastFile) {
+          setIsUploadingPhoto(true);
+          try {
+            const base64 = await compressImage(lastFile);
+            const uploaded = await uploadReceiptImageAction(base64);
+            if (uploaded.url) {
+              receiptUrl = uploaded.url;
+            } else {
+              console.warn("[Receipt Scanner] Photo upload skipped:", uploaded.error);
+            }
+          } catch (photoErr) {
+            console.warn("[Receipt Scanner] Photo upload failed:", photoErr);
+          } finally {
+            setIsUploadingPhoto(false);
+          }
+        }
+
         const result = await createTransactionAction({
           type: "expense",
           walletId,
@@ -324,6 +357,7 @@ export function ReceiptScannerDialog({
           amount: String(total),
           description,
           transactionDate,
+          receiptImageUrl: receiptUrl,
         });
 
         console.log("[Receipt Scanner] Save result:", result);
@@ -335,9 +369,17 @@ export function ReceiptScannerDialog({
         }
 
         console.log("[Receipt Scanner] Transaction saved successfully");
-        setOpen(false);
-        reset();
-        router.refresh();
+
+        if (result.id) {
+          setSavedTxId(result.id);
+          setSavedTxAmount(total);
+          setStep("saved");
+          router.refresh();
+        } else {
+          setOpen(false);
+          reset();
+          router.refresh();
+        }
       } catch (err) {
         console.error("[Receipt Scanner] Unexpected error during save:", err);
         setError("Terjadi kesalahan tidak terduga. Silakan coba lagi.");
@@ -667,6 +709,53 @@ export function ReceiptScannerDialog({
                 )}
 
                 {error && <ErrorBanner message={error} />}
+              </motion.div>
+            )}
+
+            {step === "saved" && (
+              <motion.div
+                key="saved-step"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center justify-center gap-4 py-8 text-center"
+              >
+                <div className="size-16 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
+                  <CheckCircle2 className="size-9" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-base font-bold text-foreground">
+                    Transaksi Berhasil Disimpan!
+                  </p>
+                  <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                    {isUploadingPhoto
+                      ? "Foto struk sedang disimpan..."
+                      : `Pengeluaran ${formatRupiah(savedTxAmount)} tercatat di riwayat transaksi.`}
+                  </p>
+                </div>
+                {savedTxId && (
+                  <SplitBillDialog
+                    transactionId={savedTxId}
+                    totalAmount={savedTxAmount}
+                    trigger={
+                      <Button className="w-full gap-2 h-11 sm:h-10 font-semibold shadow-md touch-manipulation">
+                        <UserPlus className="size-4" />
+                        Bagi Tagihan ke Teman
+                      </Button>
+                    }
+                  />
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 sm:h-10 touch-manipulation"
+                  onClick={() => {
+                    setOpen(false);
+                    reset();
+                    router.refresh();
+                  }}
+                >
+                  Selesai
+                </Button>
               </motion.div>
             )}
           </AnimatePresence>

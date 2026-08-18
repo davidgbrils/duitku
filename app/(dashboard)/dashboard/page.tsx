@@ -14,6 +14,7 @@ import {
 } from "@/components/dashboard/monthly_trend_chart";
 import { SummaryCards } from "@/components/dashboard/summary_cards";
 import { ReceiptScannerDialog } from "@/components/receipts/receipt_scanner";
+import { VoiceButton } from "@/components/voice/voice_button";
 import { TransactionItem } from "@/components/transactions/transaction_item";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,6 +164,7 @@ export default async function DashboardPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+              <VoiceButton wallets={walletList} categories={categoryList} />
               <ReceiptScannerDialog wallets={walletList} categories={categoryList} />
               <Button render={<Link href="/wallets" />} variant="outline" className="gap-2 shadow-sm">
                 <Wallet className="size-4" />

@@ -43,6 +43,12 @@ export const createTransactionSchema = z.object({
   amount: amountString,
   description: descriptionSchema,
   transactionDate: transactionDateSchema,
+  receiptImageUrl: z
+    .string()
+    .trim()
+    .max(1000, "URL struk terlalu panjang")
+    .optional()
+    .or(z.literal("")),
 });
 
 export const updateTransactionSchema = z.object({
@@ -53,6 +59,12 @@ export const updateTransactionSchema = z.object({
   amount: amountString,
   description: descriptionSchema,
   transactionDate: transactionDateSchema,
+  receiptImageUrl: z
+    .string()
+    .trim()
+    .max(1000, "URL struk terlalu panjang")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;

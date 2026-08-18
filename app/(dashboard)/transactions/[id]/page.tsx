@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
+import { ReceiptPreview } from "@/components/receipts/receipt_preview";
 import { DeleteTransactionButton } from "@/components/transactions/delete_transaction_button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +8,13 @@ import { EditTransactionDialog } from "@/features/transactions/transaction_form"
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime } from "@/lib/utils/date";
 import { formatRupiah, formatSignedRupiah } from "@/lib/utils/money";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Users,
+  CheckCircle2,
+  Circle,
+} from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +34,7 @@ export default async function TransactionDetailPage({
     redirect("/login");
   }
 
-  const [{ data: transaction }, { data: wallets }, { data: categories }] =
+  const [{ data: transaction }, { data: wallets }, { data: categories }, { data: splitBill }] =
     await Promise.all([
       supabase
         .from("transactions")
@@ -36,6 +43,11 @@ export default async function TransactionDetailPage({
         .maybeSingle(),
       supabase.from("wallets").select("*"),
       supabase.from("categories").select("*"),
+      supabase
+        .from("split_bills")
+        .select("*, split_bill_members(*)")
+        .eq("transaction_id", id)
+        .maybeSingle(),
     ]);
 
   // RLS menjamin transaksi milik user lain tidak terlihat → notFound.
@@ -45,6 +57,9 @@ export default async function TransactionDetailPage({
 
   const wallet = wallets?.find((w) => w.id === transaction.wallet_id);
   const isIncome = transaction.type === "income";
+  const members = splitBill?.split_bill_members ?? [];
+  const totalMemberAmount = members.reduce((sum, m) => sum + Number(m.amount), 0);
+  const unsettledCount = members.filter((m) => !m.is_settled).length;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
@@ -126,6 +141,59 @@ export default async function TransactionDetailPage({
           />
         </CardContent>
       </Card>
+
+      {transaction.receipt_image_url && (
+        <Card>
+          <CardContent className="px-6 py-5">
+            <p className="text-muted-foreground text-sm mb-2">Bukti Struk</p>
+            <ReceiptPreview url={transaction.receipt_image_url} />
+          </CardContent>
+        </Card>
+      )}
+
+      {splitBill && (
+        <Card>
+          <CardContent className="px-6 py-5 grid gap-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Users className="size-4 text-primary" />
+                <p className="font-semibold text-sm">Bagi Tagihan</p>
+              </div>
+              {unsettledCount > 0 ? (
+                <Badge variant="outline" className="text-amber-600">
+                  {unsettledCount} belum lunas
+                </Badge>
+              ) : (
+                <Badge className="text-success bg-success/10">Lunas</Badge>
+              )}
+            </div>
+            <div className="rounded-lg bg-muted/40 p-3 grid gap-1.5 text-xs">
+              {members.map((member) => (
+                <div key={member.id} className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 font-medium">
+                    {member.is_settled ? (
+                      <CheckCircle2 className="size-3.5 text-success" />
+                    ) : (
+                      <Circle className="size-3.5 text-muted-foreground" />
+                    )}
+                    {member.member_name}
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {formatRupiah(Number(member.amount))}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {totalMemberAmount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Bagian Anda:{" "}
+                <strong>{formatRupiah(Number(transaction.amount) - totalMemberAmount)}</strong>{" "}
+                dari total belanja {formatRupiah(Number(transaction.amount))}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

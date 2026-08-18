@@ -11,9 +11,10 @@ import {
   type UpdateTransactionInput,
 } from "@/lib/validations/transaction";
 
-/** Hasil action: error user-friendly untuk form. */
+/** Hasil action: error user-friendly untuk form + id transaksi baru (untuk flow lanjutan). */
 export type TransactionActionResult = {
   error?: string;
+  id?: string;
 };
 
 const SERVICE_UNAVAILABLE =
@@ -30,10 +31,12 @@ export async function createTransactionAction(
     return { error: parsed.error.issues[0]?.message ?? "Input tidak valid." };
   }
 
+  let txId: string | undefined;
+
   try {
     const supabase = await createClient();
     // Ownership wallet/kategori divalidasi di dalam RPC (auth.uid()).
-    const { error } = await supabase.rpc("create_transaction", {
+    const { data, error } = await supabase.rpc("create_transaction", {
       p_type: parsed.data.type,
       p_wallet_id: parsed.data.walletId,
       p_category_id:
@@ -43,12 +46,15 @@ export async function createTransactionAction(
       p_amount: Number(parsed.data.amount),
       p_description: parsed.data.description || null,
       p_transaction_date: parsed.data.transactionDate,
+      p_receipt_image_url: parsed.data.receiptImageUrl || null,
     });
 
     if (error) {
       console.error("create_transaction error:", error);
       return { error: "Gagal menyimpan transaksi. Silakan coba lagi." };
     }
+
+    txId = data;
   } catch {
     return { error: SERVICE_UNAVAILABLE };
   }
@@ -56,7 +62,7 @@ export async function createTransactionAction(
   revalidatePath("/transactions");
   revalidatePath("/wallets");
   revalidatePath("/dashboard");
-  return {};
+  return { id: txId };
 }
 
 export async function updateTransactionAction(
@@ -80,6 +86,7 @@ export async function updateTransactionAction(
       p_amount: Number(parsed.data.amount),
       p_description: parsed.data.description || null,
       p_transaction_date: parsed.data.transactionDate,
+      p_receipt_image_url: parsed.data.receiptImageUrl || null,
     });
 
     if (error) {
