@@ -1,6 +1,6 @@
 "use server";
 
-export type AiVoiceResult = {
+export type VoiceDraft = {
   type: "income" | "expense";
   amount?: number;
   categoryHint?: string;
@@ -10,14 +10,33 @@ export type AiVoiceResult = {
   notes?: string;
 };
 
+export type VoiceChatMessage = {
+  role: "user" | "model";
+  text: string;
+};
+
+export type AiVoiceResult = {
+  userText: string;
+  reply: string;
+  confirmed: boolean;
+  draft: VoiceDraft;
+};
+
 /**
- * Server action untuk pencatatan transaksi via suara.
- * Audio (data URL base64) dikirim ke Gemini 2.5 Flash (multimodal) dan
- * dikembalikan sebagai JSON terstruktur untuk di-review user sebelum disimpan.
+ * Server action untuk asisten pencatatan transaksi dua arah.
+ * Setiap suara direkam → dikonversi WAV → bersama riwayat percakapan dikirim
+ * ke Gemini 2.5 Flash. Gemini mengembalikan:
+ *   - userText: apa yang didengar pada turn ini
+ *   - reply:    balasan konfirmasi (mis. "Pengeluaran Kopi Kenangan 80 ribu, ya?")
+ *   - confirmed: true jika user mengonfirmasi
+ *   - draft:    keadaan transaksi terkini (bisa direvisi lewat suara)
+ * Tidak pernah auto-save dari sisi server — client yang menyimpan saat confirmed.
  */
-export async function processVoiceTransactionAction(
-  audioDataUrl: string
-): Promise<{ data?: AiVoiceResult; error?: string }> {
+export async function processVoiceTransactionAction(input: {
+  audioDataUrl: string;
+  conversation: VoiceChatMessage[];
+  currentDraft?: VoiceDraft | null;
+}): Promise<{ data?: AiVoiceResult; error?: string }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return {
@@ -26,12 +45,18 @@ export async function processVoiceTransactionAction(
     };
   }
 
-  const mimeMatch = /^data:(audio\/[^;,]+);base64,/.exec(audioDataUrl);
+  const mimeMatch = /^data:(audio\/[^;,]+)/.exec(input.audioDataUrl);
   if (!mimeMatch) {
     return { error: "Rekaman audio tidak valid." };
   }
   const mime = mimeMatch[1];
-  const base64 = audioDataUrl.replace(/^data:audio\/[^;,]+;base64,/, "");
+  const base64 = input.audioDataUrl.replace(/^data:audio\/[^;]+;base64,/, "");
+
+  const history: { role: "user" | "model"; parts: { text: string }[] }[] =
+    input.conversation.map((msg) => ({
+      role: msg.role,
+      parts: [{ text: msg.text }],
+    }));
 
   try {
     const controller = new AbortController();
@@ -45,7 +70,9 @@ export async function processVoiceTransactionAction(
         signal: controller.signal,
         body: JSON.stringify({
           contents: [
+            ...history,
             {
+              role: "user",
               parts: [
                 {
                   inline_data: {
@@ -54,15 +81,19 @@ export async function processVoiceTransactionAction(
                   },
                 },
                 {
-                  text: `Anda adalah asisten pencatat keuangan pribadi Indonesia. Dengarkan rekaman suara pengguna yang berisi perintah mencatat transaksi keuangan, lalu kembalikan JSON terstruktur:
-- type: "income" (pemasukan) atau "expense" (pengeluaran).
-- amount: Nominal rupiah (number bulat). Contoh 25 ribu -> 25000, 50 ribu -> 50000, 1 juta -> 1000000.
-- categoryHint: Kategori yang paling cocok dari (Food & Beverage, Transportasi, Belanja, Tagihan & Utilitas, Hiburan, Kesehatan, Pendidikan, Gaji, Bonus, Penjualan, Investasi) atau perkiraan nama kategori.
-- walletHint: Petunjuk dompet jika disebutkan (misal Cash, BCA, DANA, GoPay) — kosongkan jika tidak ada.
-- merchantName: Nama toko/tempat jika ada.
-- paymentMethod: Cara bayar jika disebutkan (Tunai, QRIS, Transfer, Kartu Debit, E-Wallet) — kosongkan jika tidak jelas.
-- notes: Deskripsi singkat transaksi.
-Hanya kembalikan JSON valid, tanpa teks lain.`,
+                  text: `Anda adalah asisten pencatatan keuangan pribadi Indonesia yang berbicara dua arah. Pengguna merekam suara untuk mencatat atau merevisi transaksi.
+
+Konteks draft saat ini (mungkin kosong): ${JSON.stringify(input.currentDraft ?? null)}
+
+Tugas Anda per turn:
+1. Dengarkan ucapan pengguna pada audio turn ini.
+2. userText: transkripsi ucapan pengguna turn ini (bahasa Indonesia).
+3. Update draft berdasarkan ucapan: nominal (25 ribu -> 25000, 1 juta -> 1000000), type (income/expense), categoryHint, walletHint, merchantName, paymentMethod, notes. Pertahankan nilai lama yang tidak disebutkan.
+4. reply: balasan singkat ramah yang MEMBACA ULANG draft untuk konfirmasi. Contoh: "Pengeluaran Kopi Kenangan 80 ribu pakai QRIS dari GoPay, ya?" atau "Baik, jadi nominalnya 70 ribu, ya?" Jika pengguna mengucapkan konfirmasi ("ya", "betul", "benar", "iya", "oke", "sudah", "bener"), set confirmed=true dan reply misal "Oke, transaksi sudah saya catat."
+5. confirmed: true hanya jika pengguna jelas mengonfirmasi pada turn ini. Untuk perintah awal tanpa konfirmasi, selalu false.
+
+turunkan juga kategori yang cocok dari list: Food & Beverage, Transportasi, Belanja, Tagihan & Utilitas, Hiburan, Kesehatan, Pendidikan, Gaji, Bonus, Penjualan, Investasi.
+Kembalikan JSON valid tanpa teks lain.`,
                 },
               ],
             },
@@ -72,15 +103,24 @@ Hanya kembalikan JSON valid, tanpa teks lain.`,
             response_schema: {
               type: "OBJECT",
               properties: {
-                type: { type: "STRING", enum: ["income", "expense"] },
-                amount: { type: "NUMBER" },
-                categoryHint: { type: "STRING" },
-                walletHint: { type: "STRING" },
-                merchantName: { type: "STRING" },
-                paymentMethod: { type: "STRING" },
-                notes: { type: "STRING" },
+                userText: { type: "STRING" },
+                reply: { type: "STRING" },
+                confirmed: { type: "BOOLEAN" },
+                draft: {
+                  type: "OBJECT",
+                  properties: {
+                    type: { type: "STRING", enum: ["income", "expense"] },
+                    amount: { type: "NUMBER" },
+                    categoryHint: { type: "STRING" },
+                    walletHint: { type: "STRING" },
+                    merchantName: { type: "STRING" },
+                    paymentMethod: { type: "STRING" },
+                    notes: { type: "STRING" },
+                  },
+                  required: ["type"],
+                },
               },
-              required: ["type"],
+              required: ["userText", "reply", "confirmed", "draft"],
             },
           },
         }),
@@ -94,8 +134,8 @@ Hanya kembalikan JSON valid, tanpa teks lain.`,
       console.error("Gemini Voice HTTP Error:", errText.slice(0, 500));
       return {
         error:
-          errText.includes("audio")
-            ? "Format audio tidak didukung. Coba rekam kembali atau gunakan mode manual."
+          errText.includes("audio") || errText.includes("mime")
+            ? "Format audio tidak didukung. Coba rekam kembali."
             : "Gagal memproses suara. Periksa koneksi atau API key.",
       };
     }
