@@ -289,36 +289,59 @@ export function ReceiptScannerDialog({
 
   function handleSave() {
     setError(null);
+    
     if (!walletId) {
       setError("Silakan pilih dompet/rekening sumber pembayaran terlebih dahulu.");
       return;
     }
+    
     const total = Number(amount);
     if (!Number.isFinite(total) || total <= 0) {
       setError("Nominal total pembayaran tidak valid.");
       return;
     }
+    
     if (!/^\d{4}-\d{2}-\d{2}$/.test(transactionDate)) {
       setError("Format tanggal transaksi tidak valid.");
       return;
     }
 
     startTransition(async () => {
-      const result = await createTransactionAction({
-        type: "expense",
-        walletId,
-        categoryId,
-        amount: String(total),
-        description,
-        transactionDate,
-      });
-      if (result?.error) {
-        setError(result.error);
-        return;
+      try {
+        console.log("[Receipt Scanner] Saving transaction:", {
+          type: "expense",
+          walletId,
+          categoryId,
+          amount: String(total),
+          description,
+          transactionDate,
+        });
+
+        const result = await createTransactionAction({
+          type: "expense",
+          walletId,
+          categoryId,
+          amount: String(total),
+          description,
+          transactionDate,
+        });
+
+        console.log("[Receipt Scanner] Save result:", result);
+
+        if (result?.error) {
+          console.error("[Receipt Scanner] Save error:", result.error);
+          setError(result.error);
+          return;
+        }
+
+        console.log("[Receipt Scanner] Transaction saved successfully");
+        setOpen(false);
+        reset();
+        router.refresh();
+      } catch (err) {
+        console.error("[Receipt Scanner] Unexpected error during save:", err);
+        setError("Terjadi kesalahan tidak terduga. Silakan coba lagi.");
       }
-      setOpen(false);
-      reset();
-      router.refresh();
     });
   }
 
@@ -341,20 +364,24 @@ export function ReceiptScannerDialog({
         }
       />
 
-      <DialogContent className="max-w-lg w-[95vw] sm:w-full max-h-[92dvh] flex flex-col p-4 sm:p-6 overflow-hidden rounded-2xl">
-        <DialogHeader className="shrink-0 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold">
-            <Sparkles className="text-primary size-5" />
-            {step === "review" ? "Hasil Pembacaan Struk" : "Pindai Struk Belanja"}
+      <DialogContent className="max-w-lg w-[95vw] sm:w-full max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-2xl">
+        <DialogHeader className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
+            <div className="size-8 sm:size-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Sparkles className="text-primary size-4 sm:size-5" />
+            </div>
+            <span className="flex-1">
+              {step === "review" ? "Hasil Pembacaan Struk" : "Pindai Struk Belanja"}
+            </span>
           </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
+          <DialogDescription className="text-xs sm:text-sm text-muted-foreground pt-1">
             {step === "review"
-              ? "Periksa & sesuaikan rincian transaksi sebelum disimpan ke dompet Anda."
-              : "Unggah foto struk belanjaan Anda. Pilih metode pemrosesan OCR Tesseract atau AI Vision."}
+              ? "Periksa & sesuaikan rincian transaksi sebelum disimpan."
+              : "Unggah foto struk belanjaan. Pilih OCR Tesseract (lokal) atau AI Vision (presisi tinggi)."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-1 py-1 grid gap-4 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 grid gap-4 custom-scrollbar">
           <AnimatePresence mode="wait">
             {step === "upload" && (
               <motion.div
@@ -365,51 +392,51 @@ export function ReceiptScannerDialog({
                 className="grid gap-4 py-2"
               >
                 {/* Mode Selector: OCR vs AI Vision */}
-                <div className="grid grid-cols-2 gap-2 p-1 bg-muted/40 rounded-xl border">
+                <div className="grid grid-cols-2 gap-2 p-1.5 bg-muted/40 rounded-xl border">
                   <button
                     type="button"
                     onClick={() => setScanEngine("ocr")}
                     className={cn(
-                      "flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all",
+                      "flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 py-3 sm:py-2.5 px-2 sm:px-3 rounded-lg text-xs font-semibold transition-all",
                       scanEngine === "ocr"
                         ? "bg-card text-primary shadow-sm border"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Zap className="size-3.5" />
-                    OCR Tesseract (Lokal)
+                    <Zap className="size-4 sm:size-3.5" />
+                    <span className="text-center sm:text-left leading-tight">OCR Tesseract</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setScanEngine("ai")}
                     className={cn(
-                      "flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all",
+                      "flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 py-3 sm:py-2.5 px-2 sm:px-3 rounded-lg text-xs font-semibold transition-all",
                       scanEngine === "ai"
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Brain className="size-3.5" />
-                    AI Vision ✨ (Presisi 99%)
+                    <Brain className="size-4 sm:size-3.5" />
+                    <span className="text-center sm:text-left leading-tight">AI Vision ✨</span>
                   </button>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="hover:bg-muted/50 focus:ring-2 focus:ring-primary focus:outline-none flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-primary/30 bg-muted/20 px-4 py-10 text-center transition-all cursor-pointer"
+                  className="hover:bg-muted/50 focus:ring-2 focus:ring-primary focus:outline-none flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-muted/20 px-4 py-8 sm:py-10 text-center transition-all cursor-pointer touch-manipulation"
                 >
-                  <div className="rounded-full bg-primary/10 p-4 text-primary">
-                    <ImagePlus className="size-8" />
+                  <div className="rounded-full bg-primary/10 p-3 sm:p-4 text-primary">
+                    <ImagePlus className="size-7 sm:size-8" />
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-foreground">
-                      Ambil Foto atau Pilih Gambar Struk
+                      Ambil Foto atau Pilih Gambar
                     </p>
-                    <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                    <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
                       {scanEngine === "ai"
-                        ? "Mode AI Vision aktif · Membaca struk buram/lusuh/miring dengan akurasi 99%"
-                        : "Mode OCR Tesseract aktif · Gambar diolah langsung di HP Anda (Aman & Privat)"}
+                        ? "AI Vision membaca struk buram/lusuh dengan akurasi 99%"
+                        : "Gambar diolah langsung di perangkat Anda (aman & privat)"}
                     </p>
                   </div>
                 </button>
@@ -436,16 +463,16 @@ export function ReceiptScannerDialog({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center gap-4 py-12 text-center"
+                className="flex flex-col items-center justify-center gap-4 py-8 sm:py-12 text-center"
               >
                 <div className="relative">
-                  <div className="size-16 rounded-full bg-primary/10 animate-ping absolute inset-0" />
-                  <div className="size-16 rounded-full bg-primary/20 flex items-center justify-center relative">
-                    <Loader2 className="text-primary size-8 animate-spin" />
+                  <div className="size-14 sm:size-16 rounded-full bg-primary/10 animate-ping absolute inset-0" />
+                  <div className="size-14 sm:size-16 rounded-full bg-primary/20 flex items-center justify-center relative">
+                    <Loader2 className="text-primary size-7 sm:size-8 animate-spin" />
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-base font-semibold text-foreground">
+                <div className="space-y-2 px-4">
+                  <p className="text-sm sm:text-base font-semibold text-foreground">
                     {processingStep === "validating" && "Memvalidasi gambar..."}
                     {processingStep === "compressing" && "Mengompres gambar..."}
                     {processingStep === "uploading" && "Mengirim ke AI Vision..."}
@@ -455,7 +482,7 @@ export function ReceiptScannerDialog({
                       ? "Mengekstraksi Struk dengan AI Vision..."
                       : "Sedang Membaca Teks Struk...")}
                   </p>
-                  <p className="text-xs text-muted-foreground max-w-xs">
+                  <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
                     {scanEngine === "ai"
                       ? "Menguraikan merchant, tanggal, item barang, total & kategori dengan Gemini AI."
                       : "Ekstraksi otomatis nama toko, tanggal, item barang, total pembayaran & kategori."}
@@ -473,15 +500,15 @@ export function ReceiptScannerDialog({
               >
                 {/* Pratinjau Gambar Interaktif */}
                 {imageUrl && (
-                  <div className="rounded-xl border bg-muted/40 overflow-hidden transition-all">
+                  <div className="rounded-xl border bg-muted/30 overflow-hidden transition-all">
                     <button
                       type="button"
                       onClick={() => setShowImagePreview(!showImagePreview)}
-                      className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/60 transition-colors"
+                      className="w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors"
                     >
-                      <span className="flex items-center gap-1.5">
-                        <Maximize2 className="size-3.5" />
-                        Pratinjau Foto Struk
+                      <span className="flex items-center gap-2">
+                        <Maximize2 className="size-4" />
+                        <span>Pratinjau Foto Struk</span>
                       </span>
                       {showImagePreview ? (
                         <ChevronUp className="size-4" />
@@ -503,77 +530,79 @@ export function ReceiptScannerDialog({
                 )}
 
                 {/* Form Rincian Transaksi */}
-                <FieldRow label="Nama Toko / Merchant" confidence={extraction.confidence.merchant}>
-                  <Input
-                    value={merchant}
-                    onChange={(event) => setMerchant(event.target.value)}
-                    placeholder="Contoh: Indomaret, Alfamart, Warung Makan"
-                    className="h-10 text-sm"
-                  />
-                </FieldRow>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <FieldRow label="Tanggal Transaksi" confidence={extraction.confidence.date}>
+                <div className="grid gap-3">
+                  <FieldRow label="Nama Toko / Merchant" confidence={extraction.confidence.merchant}>
                     <Input
-                      type="date"
-                      value={transactionDate}
-                      onChange={(event) => setTransactionDate(event.target.value)}
+                      value={merchant}
+                      onChange={(event) => setMerchant(event.target.value)}
+                      placeholder="Contoh: Indomaret, Alfamart"
                       className="h-10 text-sm"
                     />
                   </FieldRow>
-                  <FieldRow label="Total Belanja (Rp)" confidence={extraction.confidence.total}>
-                    <Input
-                      inputMode="numeric"
-                      value={amount}
-                      onChange={(event) => setAmount(event.target.value)}
-                      placeholder="0"
-                      className="h-10 text-sm font-semibold text-primary"
-                    />
-                  </FieldRow>
-                </div>
 
-                <FieldRow label="Kategori Pengeluaran" confidence={extraction.confidence.category}>
-                  <Select
-                    value={categoryId}
-                    onValueChange={(value) => setCategoryId(value ?? NO_CATEGORY_VALUE)}
-                    items={expenseCategoryItems}
-                  >
-                    <SelectTrigger className="w-full h-10 text-sm">
-                      <SelectValue placeholder="Pilih kategori pengeluaran" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NO_CATEGORY_VALUE}>Tanpa Kategori</SelectItem>
-                      {categories
-                        .filter((category) => category.type === "expense")
-                        .map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <FieldRow label="Tanggal Transaksi" confidence={extraction.confidence.date}>
+                      <Input
+                        type="date"
+                        value={transactionDate}
+                        onChange={(event) => setTransactionDate(event.target.value)}
+                        className="h-10 text-sm"
+                      />
+                    </FieldRow>
+                    <FieldRow label="Total Belanja (Rp)" confidence={extraction.confidence.total}>
+                      <Input
+                        inputMode="numeric"
+                        value={amount}
+                        onChange={(event) => setAmount(event.target.value)}
+                        placeholder="0"
+                        className="h-10 text-sm font-semibold text-primary"
+                      />
+                    </FieldRow>
+                  </div>
+
+                  <FieldRow label="Kategori Pengeluaran" confidence={extraction.confidence.category}>
+                    <Select
+                      value={categoryId}
+                      onValueChange={(value) => setCategoryId(value ?? NO_CATEGORY_VALUE)}
+                      items={expenseCategoryItems}
+                    >
+                      <SelectTrigger className="w-full h-10 text-sm">
+                        <SelectValue placeholder="Pilih kategori" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_CATEGORY_VALUE}>Tanpa Kategori</SelectItem>
+                        {categories
+                          .filter((category) => category.type === "expense")
+                          .map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </FieldRow>
+
+                  <div className="grid gap-1.5">
+                    <Label className="text-xs font-semibold text-foreground">
+                      Dompet / Rekening Pembayaran
+                    </Label>
+                    <Select
+                      value={walletId}
+                      onValueChange={(value) => setWalletId(value ?? "")}
+                      items={walletItems}
+                    >
+                      <SelectTrigger className="w-full h-10 text-sm">
+                        <SelectValue placeholder="Pilih sumber dompet" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeWallets.map((wallet) => (
+                          <SelectItem key={wallet.id} value={wallet.id}>
+                            {wallet.name} ({formatRupiah(Number(wallet.current_balance))})
                           </SelectItem>
                         ))}
-                    </SelectContent>
-                  </Select>
-                </FieldRow>
-
-                <div className="grid gap-1.5">
-                  <Label className="text-xs font-semibold text-foreground">
-                    Dompet / Rekening Pembayaran
-                  </Label>
-                  <Select
-                    value={walletId}
-                    onValueChange={(value) => setWalletId(value ?? "")}
-                    items={walletItems}
-                  >
-                    <SelectTrigger className="w-full h-10 text-sm">
-                      <SelectValue placeholder="Pilih sumber dompet" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {activeWallets.map((wallet) => (
-                        <SelectItem key={wallet.id} value={wallet.id}>
-                          {wallet.name} ({formatRupiah(Number(wallet.current_balance))})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {/* Daftar Barang Terbaca (Collapsible Accordion) */}
@@ -582,11 +611,11 @@ export function ReceiptScannerDialog({
                     <button
                       type="button"
                       onClick={() => setShowItemsList(!showItemsList)}
-                      className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors"
+                      className="w-full flex items-center justify-between px-3 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors"
                     >
-                      <span className="flex items-center gap-1.5">
-                        <ShoppingBag className="size-3.5 text-primary" />
-                        Daftar Barang Terbaca ({extraction.items.length} Item)
+                      <span className="flex items-center gap-2">
+                        <ShoppingBag className="size-4 text-primary" />
+                        <span>Daftar Barang ({extraction.items.length} Item)</span>
                       </span>
                       {showItemsList ? (
                         <ChevronUp className="size-4 text-muted-foreground" />
@@ -600,7 +629,7 @@ export function ReceiptScannerDialog({
                         {extraction.items.map((item, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between gap-2 text-xs py-1 px-2 rounded-md hover:bg-muted/40"
+                            className="flex items-center justify-between gap-2 text-xs py-2 px-2.5 rounded-md hover:bg-muted/40 transition-colors"
                           >
                             <span className="truncate font-medium text-foreground">
                               {item.name}
@@ -618,22 +647,22 @@ export function ReceiptScannerDialog({
 
                 <div className="grid gap-1.5">
                   <Label htmlFor="receipt-description" className="text-xs font-semibold text-foreground">
-                    Catatan / Deskripsi Transaksi
+                    Catatan / Deskripsi
                   </Label>
                   <Textarea
                     id="receipt-description"
                     rows={2}
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
-                    placeholder="Tambah catatan transaksi struk ini..."
+                    placeholder="Tambah catatan transaksi..."
                     className="text-sm resize-none"
                   />
                 </div>
 
                 {extraction.paymentMethod && (
-                  <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-xs font-medium text-primary">
+                  <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2.5 text-xs font-medium text-primary">
                     <FileSearch className="size-4 shrink-0" />
-                    <span>Metode Pembayaran Terdeteksi: <strong>{extraction.paymentMethod}</strong></span>
+                    <span>Metode: <strong>{extraction.paymentMethod}</strong></span>
                   </div>
                 )}
 
@@ -645,35 +674,40 @@ export function ReceiptScannerDialog({
 
         {/* Footer Tombol Aksi Interaktif (Sticky di Layar Mobile) */}
         {step === "review" && (
-          <div className="shrink-0 pt-3 border-t mt-1 flex flex-col sm:flex-row gap-2 bg-background">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                reset();
-                setStep("upload");
-              }}
-              disabled={isSaving}
-              className="w-full sm:w-auto gap-2"
-            >
-              <RefreshCw className="size-4" />
-              Foto Ulang
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="w-full sm:flex-1 gap-2 font-semibold shadow-md"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Menyimpan Transaksi...
-                </>
-              ) : (
-                "Simpan Transaksi Struk"
-              )}
-            </Button>
+          <div className="shrink-0 px-4 sm:px-6 pb-4 sm:pb-6 pt-3 border-t bg-background">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  reset();
+                  setStep("upload");
+                }}
+                disabled={isSaving}
+                className="w-full sm:w-auto gap-2 h-11 sm:h-10 touch-manipulation"
+              >
+                <RefreshCw className="size-4" />
+                Foto Ulang
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving || !walletId || !amount}
+                className="w-full sm:flex-1 gap-2 h-11 sm:h-10 font-semibold shadow-md touch-manipulation"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <ScanLine className="size-4" />
+                    Simpan Transaksi
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
@@ -692,7 +726,7 @@ function FieldRow({
 }) {
   return (
     <div className="grid gap-1.5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <Label className="text-xs font-semibold text-foreground">{label}</Label>
         <ConfidenceBadge value={confidence} />
       </div>
@@ -734,9 +768,10 @@ function ErrorBanner({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-3 py-2 text-xs font-medium"
+      className="bg-destructive/10 border border-destructive/20 text-destructive rounded-xl px-3 py-2.5 text-xs font-medium flex items-start gap-2"
     >
-      {message}
+      <span className="shrink-0 mt-0.5">⚠️</span>
+      <span className="flex-1">{message}</span>
     </div>
   );
 }
