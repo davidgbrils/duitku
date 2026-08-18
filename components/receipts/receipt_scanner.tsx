@@ -52,13 +52,38 @@ type Category = Database["public"]["Tables"]["categories"]["Row"];
 
 type Step = "upload" | "processing" | "review";
 type ScanEngine = "ocr" | "ai";
+type ProcessingStep = "idle" | "validating" | "compressing" | "uploading" | "analyzing" | "extracting";
 
-function fileToBase64(file: File): Promise<string> {
+async function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
+    const img = new Image();
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      reject(new Error("Canvas context not available"));
+      return;
+    }
+
+    img.onload = () => {
+      const MAX_WIDTH = 1200;
+      const scale = Math.min(1, MAX_WIDTH / img.width);
+
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+      URL.revokeObjectURL(img.src);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error("Failed to load image"));
+    };
+
+    img.src = URL.createObjectURL(file);
   });
 }
 
@@ -85,6 +110,7 @@ export function ReceiptScannerDialog({
   const [extraction, setExtraction] = useState<ReceiptExtraction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, startTransition] = useTransition();
+  const [processingStep, setProcessingStep] = useState<ProcessingStep>("idle");
 
   // State tampilan interaktif
   const [showImagePreview, setShowImagePreview] = useState(true);
@@ -117,6 +143,7 @@ export function ReceiptScannerDialog({
     setImageUrl(null);
     setExtraction(null);
     setError(null);
+    setProcessingStep("idle");
     setShowImagePreview(true);
     setShowItemsList(true);
     if (fileInputRef.current) {
@@ -125,28 +152,52 @@ export function ReceiptScannerDialog({
   }
 
   async function handleFile(file: File, chosenEngine: ScanEngine = scanEngine) {
-    if (!file.type.startsWith("image/")) {
-      setError("Format file tidak didukung. Silakan pilih gambar (JPG, PNG, atau WebP).");
+    setError(null);
+    setProcessingStep("validating");
+
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Format tidak didukung. Gunakan JPG, PNG, atau WebP.");
+      setProcessingStep("idle");
       return;
     }
-    setError(null);
+
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError("Ukuran file terlalu besar. Maksimal 10MB.");
+      setProcessingStep("idle");
+      return;
+    }
+
+    try {
+      await createImageBitmap(file);
+    } catch {
+      setError("File rusak atau bukan gambar valid.");
+      setProcessingStep("idle");
+      return;
+    }
+
     const url = URL.createObjectURL(file);
     setImageUrl(url);
     setStep("processing");
 
-    // Mode Pemrosesan 1: AI Vision Gemini (Jika dipilih)
     if (chosenEngine === "ai") {
       try {
-        const base64 = await fileToBase64(file);
+        setProcessingStep("compressing");
+        const base64 = await compressImage(file);
+
+        setProcessingStep("uploading");
         const aiRes = await scanReceiptWithAIAction(base64);
 
         if (aiRes.error) {
           setError(aiRes.error);
           setStep("upload");
+          setProcessingStep("idle");
           return;
         }
 
         if (aiRes.data) {
+          setProcessingStep("analyzing");
           const data = aiRes.data;
           const items = (data.items ?? []).map((i) => ({
             name: i.name,
@@ -187,18 +238,20 @@ export function ReceiptScannerDialog({
               : "Pembelian dari struk belanja (AI Vision)"
           );
           setStep("review");
+          setProcessingStep("idle");
           return;
         }
       } catch (err) {
         console.error("AI Vision Scan error:", err);
         setError("Pemrosesan AI gagal. Silakan coba lagi atau gunakan mode OCR Tesseract.");
         setStep("upload");
+        setProcessingStep("idle");
         return;
       }
     }
 
-    // Mode Pemrosesan 2: OCR Tesseract (Default/Lokal)
     try {
+      setProcessingStep("extracting");
       const { createWorker } = await import("tesseract.js");
       const worker = await createWorker("ind");
       const { data } = await worker.recognize(url);
@@ -224,11 +277,13 @@ export function ReceiptScannerDialog({
         base.merchantName ? `Struk ${base.merchantName}` : "Pembelian dari struk belanja"
       );
       setStep("review");
+      setProcessingStep("idle");
     } catch {
       setError(
         "Sistem tidak dapat membaca teks struk. Pastikan foto struk cukup terang, tidak buram, dan tegak lurus."
       );
       setStep("upload");
+      setProcessingStep("idle");
     }
   }
 
@@ -391,9 +446,14 @@ export function ReceiptScannerDialog({
                 </div>
                 <div className="space-y-1">
                   <p className="text-base font-semibold text-foreground">
-                    {scanEngine === "ai"
+                    {processingStep === "validating" && "Memvalidasi gambar..."}
+                    {processingStep === "compressing" && "Mengompres gambar..."}
+                    {processingStep === "uploading" && "Mengirim ke AI Vision..."}
+                    {processingStep === "analyzing" && "Menganalisis struk dengan AI..."}
+                    {processingStep === "extracting" && "Membaca teks struk..."}
+                    {processingStep === "idle" && (scanEngine === "ai"
                       ? "Mengekstraksi Struk dengan AI Vision..."
-                      : "Sedang Membaca Teks Struk..."}
+                      : "Sedang Membaca Teks Struk...")}
                   </p>
                   <p className="text-xs text-muted-foreground max-w-xs">
                     {scanEngine === "ai"

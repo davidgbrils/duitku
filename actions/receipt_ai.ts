@@ -25,20 +25,27 @@ export async function scanReceiptWithAIAction(
   }
 
   try {
-    const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
+    const mimeMatch = base64Image.match(/^data:image\/([^;,]+)/);
+    const detectedMime = mimeMatch ? `image/${mimeMatch[1]}` : "image/jpeg";
+
+    const cleanBase64 = base64Image.replace(/^data:image\/[^;,]+;base64,/, "");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           contents: [
             {
               parts: [
                 {
                   inline_data: {
-                    mime_type: "image/jpeg",
+                    mime_type: detectedMime,
                     data: cleanBase64,
                   },
                 },
@@ -84,6 +91,8 @@ export async function scanReceiptWithAIAction(
       }
     );
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
       const errText = await response.text();
       console.error("Gemini API HTTP Error:", errText);
@@ -98,6 +107,13 @@ export async function scanReceiptWithAIAction(
     return { data };
   } catch (err) {
     console.error("AI Receipt Action Error:", err);
+    
+    if (err instanceof Error && err.name === "AbortError") {
+      return { 
+        error: "Request timeout. Coba dengan gambar lebih kecil atau gunakan mode OCR." 
+      };
+    }
+    
     return { error: "Terjadi kesalahan saat mengekstraksi struk dengan AI Vision." };
   }
 }
