@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { createClient } from "@/lib/supabase/server";
 import { budgetSchema, type BudgetInput } from "@/lib/validations/budget";
 
@@ -19,10 +21,25 @@ export async function upsertBudgetAction(input: BudgetInput): Promise<BudgetActi
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    
     if (!user) {
       return { error: "Anda harus login terlebih dahulu." };
     }
 
+    // Cek apakah kategori valid dan milik user
+    const { data: category, error: catError } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("id", parsed.data.categoryId)
+      .eq("user_id", user.id)
+      .eq("type", "expense")
+      .single();
+
+    if (catError || !category) {
+      return { error: "Kategori tidak valid atau bukan milik Anda." };
+    }
+
+    // Gunakan upsert dengan RLS (user_id akan otomatis dari auth.uid())
     const { error } = await supabase.from("budgets").upsert(
       {
         user_id: user.id,
@@ -38,9 +55,22 @@ export async function upsertBudgetAction(input: BudgetInput): Promise<BudgetActi
 
     if (error) {
       console.error("Upsert Budget Error:", error);
-      return { error: "Gagal menyimpan batas anggaran." };
+      
+      // Handle specific errors
+      if (error.code === "23505") {
+        return { error: "Anggaran untuk kategori dan bulan ini sudah ada." };
+      }
+      
+      if (error.code === "42501") {
+        return { error: "Anda tidak memiliki izin untuk menyimpan anggaran." };
+      }
+      
+      return { error: "Gagal menyimpan batas anggaran. Silakan coba lagi." };
     }
 
+    revalidatePath("/budgets");
+    revalidatePath("/dashboard");
+    
     return { success: "Batas anggaran bulanan berhasil disimpan." };
   } catch (err) {
     console.error("Upsert Budget Action Error:", err);
@@ -54,6 +84,7 @@ export async function deleteBudgetAction(budgetId: string): Promise<BudgetAction
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    
     if (!user) {
       return { error: "Anda harus login terlebih dahulu." };
     }
@@ -69,6 +100,9 @@ export async function deleteBudgetAction(budgetId: string): Promise<BudgetAction
       return { error: "Gagal menghapus batas anggaran." };
     }
 
+    revalidatePath("/budgets");
+    revalidatePath("/dashboard");
+    
     return { success: "Batas anggaran berhasil dihapus." };
   } catch (err) {
     console.error("Delete Budget Action Error:", err);

@@ -56,9 +56,11 @@ export function BudgetsClient({
   const [isOpen, setIsOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
 
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  const expenseCategories = categories.filter((c) => c.type === "expense");
+  const [categoryId, setCategoryId] = useState("");
   const [amountLimit, setAmountLimit] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const totalLimit = budgets.reduce((sum, b) => sum + Number(b.amount_limit), 0);
   const totalSpentInBudgetedCategories = budgets.reduce(
@@ -68,9 +70,10 @@ export function BudgetsClient({
 
   function openCreateModal() {
     setEditingBudget(null);
-    setCategoryId(categories[0]?.id ?? "");
+    setCategoryId(expenseCategories[0]?.id ?? "");
     setAmountLimit("");
     setError(null);
+    setSuccessMsg(null);
     setIsOpen(true);
   }
 
@@ -79,11 +82,24 @@ export function BudgetsClient({
     setCategoryId(budget.category_id);
     setAmountLimit(String(budget.amount_limit));
     setError(null);
+    setSuccessMsg(null);
     setIsOpen(true);
   }
 
   function handleSaveBudget() {
     setError(null);
+    setSuccessMsg(null);
+
+    if (!categoryId) {
+      setError("Silakan pilih kategori pengeluaran.");
+      return;
+    }
+
+    if (!amountLimit || Number(amountLimit) <= 0) {
+      setError("Batas anggaran harus lebih dari 0.");
+      return;
+    }
+
     startTransition(async () => {
       const res = await upsertBudgetAction({
         categoryId,
@@ -96,8 +112,13 @@ export function BudgetsClient({
         return;
       }
 
-      setIsOpen(false);
-      router.refresh();
+      if (res?.success) {
+        setSuccessMsg(res.success);
+        setTimeout(() => {
+          setIsOpen(false);
+          router.refresh();
+        }, 1500);
+      }
     });
   }
 
@@ -272,40 +293,64 @@ export function BudgetsClient({
 
           <div className="grid gap-4 py-2">
             {error && (
-              <div className="p-2.5 rounded-xl bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20">
-                {error}
+              <div className="p-2.5 rounded-xl bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20 flex items-start gap-2">
+                <span className="shrink-0 mt-0.5">⚠️</span>
+                <span>{error}</span>
               </div>
             )}
 
-            <div className="grid gap-1.5">
-              <Label className="text-xs font-semibold">Kategori Pengeluaran</Label>
-              <Select
-                value={categoryId}
-                onValueChange={(val) => setCategoryId(val ?? "")}
-                disabled={Boolean(editingBudget)}
-              >
-                <SelectTrigger className="h-10 text-sm">
-                  <SelectValue placeholder="Pilih kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {successMsg && (
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 text-xs font-medium border border-emerald-500/20 flex items-start gap-2">
+                <span className="shrink-0 mt-0.5">✓</span>
+                <span>{successMsg}</span>
+              </div>
+            )}
 
-            <div className="grid gap-1.5">
-              <Label className="text-xs font-semibold">Batas Limit Anggaran (Rp)</Label>
-              <Input
-                inputMode="numeric"
-                value={amountLimit}
-                onChange={(e) => setAmountLimit(e.target.value)}
-                placeholder="Contoh: 1500000"
-              />
-            </div>
+            {expenseCategories.length === 0 ? (
+              <div className="p-4 rounded-xl bg-amber-500/10 text-amber-600 text-xs font-medium border border-amber-500/20">
+                Belum ada kategori pengeluaran. Silakan buat kategori pengeluaran terlebih dahulu di halaman Kategori.
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs font-semibold">Kategori Pengeluaran</Label>
+                  <Select
+                    value={categoryId}
+                    onValueChange={(val) => setCategoryId(val ?? "")}
+                    disabled={Boolean(editingBudget)}
+                  >
+                    <SelectTrigger className="h-10 text-sm">
+                      <SelectValue placeholder="Pilih kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {expenseCategories.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {editingBudget && (
+                    <p className="text-xs text-muted-foreground">
+                      Kategori tidak dapat diubah saat edit. Hapus dan buat anggaran baru jika perlu.
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label className="text-xs font-semibold">Batas Limit Anggaran (Rp)</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={amountLimit}
+                    onChange={(e) => setAmountLimit(e.target.value)}
+                    placeholder="Contoh: 1500000"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Masukkan batas maksimal pengeluaran untuk kategori ini di bulan {currentMonthYear}.
+                  </p>
+                </div>
+              </>
+            )}
 
             <div className="flex justify-end gap-2 pt-2">
               <Button
@@ -315,7 +360,10 @@ export function BudgetsClient({
               >
                 Batal
               </Button>
-              <Button onClick={handleSaveBudget} disabled={isPending}>
+              <Button 
+                onClick={handleSaveBudget} 
+                disabled={isPending || expenseCategories.length === 0}
+              >
                 {isPending && <Loader2 className="size-4 animate-spin mr-1.5" />}
                 Simpan Anggaran
               </Button>
