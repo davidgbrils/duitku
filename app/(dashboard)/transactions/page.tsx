@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Receipt } from "lucide-react";
 
 import { Reveal } from "@/components/animations/reveal";
 import { ReceiptScannerDialog } from "@/components/receipts/receipt_scanner";
@@ -129,8 +130,10 @@ export default async function TransactionsPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Transaksi</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Duitku Transaction History
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Riwayat pemasukan dan pengeluaranmu
           </p>
         </div>
@@ -158,20 +161,25 @@ export default async function TransactionsPage({
       </div>
       <TransactionFilters categories={categoryList} wallets={walletList} />
       {totalCount > 0 && (
-        <div className="flex flex-wrap gap-x-6 gap-y-1">
-          <p className="text-muted-foreground text-sm">
-            {totalCount} transaksi
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-1">
+          <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
+            Menampilkan {transactionList.length} dari {totalCount} transaksi
           </p>
-          <p className="text-success text-sm font-medium">
-            + {formatRupiah(totalIncome)}
-          </p>
-          <p className="text-destructive text-sm font-medium">
-            - {formatRupiah(totalExpense)}
-          </p>
+          <div className="flex items-center gap-4 text-xs font-semibold">
+            <span className="text-emerald-600 dark:text-emerald-400">
+              + {formatRupiah(totalIncome)}
+            </span>
+            <span className="text-rose-600 dark:text-rose-400">
+              - {formatRupiah(totalExpense)}
+            </span>
+          </div>
         </div>
       )}
       {transactionList.length === 0 ? (
-        <div className="bg-card ring-border flex flex-col items-center gap-3 rounded-xl px-6 py-14 text-center ring-1">
+        <div className="bg-card border-border flex flex-col items-center gap-3 rounded-2xl border px-6 py-14 text-center shadow-sm">
+          <div className="bg-muted flex size-14 items-center justify-center rounded-full">
+            <Receipt className="text-muted-foreground size-6" />
+          </div>
           <p className="text-base font-medium">Belum ada Transaksi</p>
           <p className="text-muted-foreground max-w-sm text-sm">
             {totalCount === 0

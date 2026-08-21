@@ -11,6 +11,10 @@
   --font-heading: var(--font-sans);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-badge-income: var(--badge-income);
+  --color-badge-income-foreground: var(--badge-income-foreground);
+  --color-badge-expense: var(--badge-expense);
+  --color-badge-expense-foreground: var(--badge-expense-foreground);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -52,15 +56,15 @@
 /* Duitku design tokens — DESIGN.md §9 */
 :root {
   --background: #f8fafc;
-  --foreground: #0f172a;
+  --foreground: #1e293b;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #1e293b;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #1e293b;
   --primary: #4f46e5;
   --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
+  --secondary-foreground: #1e293b;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
   --accent: #eef2ff;
@@ -69,6 +73,10 @@
   --destructive-foreground: #ffffff;
   --success: #16a34a;
   --warning: #d97706;
+  --badge-income: #dcfce7;
+  --badge-income-foreground: #15803d;
+  --badge-expense: #fee2e2;
+  --badge-expense-foreground: #b91c1c;
   --border: #e2e8f0;
   --input: #e2e8f0;
   --ring: #4f46e5;

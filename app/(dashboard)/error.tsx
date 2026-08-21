@@ -18,7 +18,7 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <div className="bg-card ring-border flex flex-col items-center gap-3 rounded-xl px-6 py-14 text-center ring-1">
+    <div className="bg-card border-border flex flex-col items-center gap-3 rounded-2xl border px-6 py-14 text-center shadow-sm">
       <p className="text-base font-medium">Terjadi kesalahan</p>
       <p className="text-muted-foreground max-w-sm text-sm">
         Maaf, halaman gagal dimuat. Coba muat ulang, atau kembali beberapa saat

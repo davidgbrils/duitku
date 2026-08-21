@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
-import Image from "next/image";
-
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
@@ -15,23 +13,14 @@ const navLinks = [
   { href: "/#faq", label: "FAQ" },
 ] as const;
 
-/**
- * Navbar landing page — sticky, minimal. Hanya untuk visitor:
- * proxy.ts sudah mengarahkan user yang login dari "/" ke /dashboard.
- */
 export function LandingNavbar() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Tutup saat Escape ditekan atau klik di luar menu.
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
+      if (event.key === "Escape") setOpen(false);
     };
     const onPointerDown = (event: PointerEvent) => {
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
@@ -47,45 +36,51 @@ export function LandingNavbar() {
   }, [open]);
 
   return (
-    <header className="border-border bg-background/80 sticky top-0 z-50 border-b backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-white/60 bg-white/65 backdrop-blur-xl shadow-xs dark:border-slate-800/80 dark:bg-slate-900/65">
       <div
         ref={rootRef}
-        className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4"
+        className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6"
       >
         <Link
           href="/"
-          className="focus-visible:ring-ring rounded-lg focus-visible:ring-2 focus-visible:outline-none"
+          className="focus-visible:ring-ring flex items-center gap-2.5 rounded-lg focus-visible:ring-2 focus-visible:outline-none"
         >
-          <Image
-            src="/images/brand/logo_light.png"
-            alt="Duitku Logo"
-            width={140}
-            height={40}
-            className="h-8 w-auto object-contain"
-            priority
-          />
+          <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-md shadow-indigo-500/20 text-white font-extrabold text-lg">
+            D
+          </div>
+          <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
+            Duitku
+          </span>
         </Link>
 
         <nav
-          className="hidden items-center gap-1 md:flex"
+          className="hidden items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/40 p-1 backdrop-blur-md dark:border-slate-800/60 dark:bg-slate-900/40 md:flex"
           aria-label="Navigasi halaman"
         >
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              className="rounded-full px-4 py-1.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
             >
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <Button variant="ghost" render={<Link href="/login" />}>
+        <div className="hidden items-center gap-2.5 md:flex">
+          <Link
+            href="/login"
+            className="rounded-full border border-slate-200/80 bg-white/50 px-4 py-1.5 text-sm font-medium text-slate-700 backdrop-blur-sm transition-all hover:bg-white hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
             Login
-          </Button>
-          <Button render={<Link href="/register" />}>Mulai Gratis</Button>
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:from-blue-700 hover:to-indigo-700"
+          >
+            Mulai Gratis
+          </Link>
         </div>
 
         {/* Hamburger — mobile saja */}
@@ -94,50 +89,46 @@ export function LandingNavbar() {
             type="button"
             variant="ghost"
             size="icon"
+            className="rounded-full bg-white/60 backdrop-blur-md"
             aria-label={open ? "Tutup menu navigasi" : "Buka menu navigasi"}
             aria-expanded={open}
             aria-controls="landing-nav-menu"
             onClick={() => setOpen((value) => !value)}
           >
-            {open ? <X /> : <Menu />}
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </Button>
           {open && (
             <div
               id="landing-nav-menu"
-              className="bg-card ring-border absolute top-full right-0 z-50 mt-2 w-60 origin-top-right rounded-2xl p-2.5 shadow-xl ring-1 animate-in fade-in-0 zoom-in-95 duration-100"
+              className="absolute top-full right-0 z-50 mt-2 w-64 origin-top-right rounded-3xl border border-white/60 bg-white/80 p-4 shadow-2xl backdrop-blur-2xl ring-1 ring-slate-900/5 animate-in fade-in-0 zoom-in-95 duration-150 dark:border-slate-800 dark:bg-slate-900/90"
             >
-              {/* Tombol Login & Register di bagian paling atas mobile menu */}
-              <div className="grid gap-2 p-1 pb-2">
-                <Button
-                  render={
-                    <Link
-                      href="/register"
-                      onClick={() => setOpen(false)}
-                    />
-                  }
-                  className="w-full font-semibold shadow-sm"
+              <div className="grid gap-2 pb-3">
+                <Link
+                  href="/register"
+                  onClick={() => setOpen(false)}
+                  className="w-full rounded-full bg-indigo-600 py-2.5 text-center text-sm font-semibold text-white shadow-sm"
                 >
                   Mulai Gratis
-                </Button>
-                <Button
-                  variant="outline"
-                  render={<Link href="/login" onClick={() => setOpen(false)} />}
-                  className="w-full justify-center"
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="w-full rounded-full border border-slate-200 bg-white/80 py-2 text-center text-sm font-medium text-slate-700"
                 >
                   Login
-                </Button>
+                </Link>
               </div>
 
-              <div className="border-border my-1 border-t" />
+              <div className="border-t border-slate-200/60 my-2" />
 
               <nav aria-label="Navigasi halaman">
-                <ul className="flex flex-col gap-0.5 pt-1">
+                <ul className="flex flex-col gap-1">
                   {navLinks.map((link) => (
                     <li key={link.href}>
                       <Link
                         href={link.href}
                         onClick={() => setOpen(false)}
-                        className="text-muted-foreground hover:bg-muted hover:text-foreground block rounded-lg px-2.5 py-2 text-sm font-medium transition-colors"
+                        className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
                         {link.label}
                       </Link>

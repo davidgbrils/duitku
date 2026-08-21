@@ -3,19 +3,18 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle,
   CheckCircle2,
+  Clock,
   Edit2,
   Loader2,
   PieChart,
   Plus,
-  ShieldAlert,
+  Search,
   Trash2,
 } from "lucide-react";
 
 import { deleteBudgetAction, upsertBudgetAction } from "@/actions/budgets";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatRupiah } from "@/lib/utils/money";
-import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
 type Budget = Database["public"]["Tables"]["budgets"]["Row"];
@@ -53,23 +51,35 @@ export function BudgetsClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  // State dialog
   const [isOpen, setIsOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState("");
 
   const expenseCategories = categories.filter((c) => c.type === "expense");
   const categoryItems = Object.fromEntries(
     expenseCategories.map((c) => [c.id, c.name])
   );
+  
+  // Form state
   const [categoryId, setCategoryId] = useState("");
   const [amountLimit, setAmountLimit] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+  // Stats calculation
   const totalLimit = budgets.reduce((sum, b) => sum + Number(b.amount_limit), 0);
-  const totalSpentInBudgetedCategories = budgets.reduce(
-    (sum, b) => sum + (categorySpentMap[b.category_id] ?? 0),
-    0
-  );
+  const totalSpentInBudgetedCategories = budgets.reduce((sum, b) => {
+    return sum + (categorySpentMap[b.category_id] ?? 0);
+  }, 0);
+
+  const filteredBudgets = budgets.filter((b) => {
+    const cat = categories.find((c) => c.id === b.category_id);
+    const name = cat?.name ?? "";
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   function openCreateModal() {
     setEditingBudget(null);
@@ -141,105 +151,126 @@ export function BudgetsClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Summary Header */}
+      {/* Top Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">
-                Total Limit Anggaran ({currentMonthYear})
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                TOTAL BUDGET LIMIT ({currentMonthYear})
               </p>
-              <p className="text-xl font-bold text-primary mt-1 tabular-nums">
+              <p className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
                 {formatRupiah(totalLimit)}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-              <PieChart className="size-5" />
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 text-indigo-600 shadow-sm dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-400">
+              <Clock className="size-5" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div className="h-full rounded-full bg-indigo-600 w-full" />
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">
-                Pengeluaran Terpakai
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                BUDGET USED
               </p>
-              <p className="text-xl font-bold text-foreground mt-1 tabular-nums">
+              <p className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
                 {formatRupiah(totalSpentInBudgetedCategories)}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-muted text-muted-foreground">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400">
               <CheckCircle2 className="size-5" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div
+              className="h-full rounded-full bg-blue-600 transition-all duration-500"
+              style={{
+                width: `${totalLimit > 0 ? Math.min(100, Math.round((totalSpentInBudgetedCategories / totalLimit) * 100)) : 0}%`,
+              }}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Action Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold tracking-tight">Anggaran Kategori</h2>
-        <Button onClick={openCreateModal} className="gap-2 shadow-sm font-semibold">
-          <Plus className="size-4" />
-          Pasang Anggaran
-        </Button>
+      {/* Action Header & Search */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Advanced Budget Planning
+          </h2>
+          <p className="text-xs text-slate-500">
+            Manage your monthly spending with precision.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="relative w-full sm:w-56">
+            <Search className="size-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input
+              type="text"
+              placeholder="Search category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 rounded-full text-xs h-9 bg-slate-50/70 dark:bg-slate-800/70"
+            />
+          </div>
+          <Button onClick={openCreateModal} className="shrink-0 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 gap-1.5 shadow-sm">
+            <Plus className="size-4" />
+            + Set Budget
+          </Button>
+        </div>
       </div>
 
       {/* Budget Items */}
-      {budgets.length === 0 ? (
-        <Card className="p-8 text-center">
-          <div className="flex flex-col items-center justify-center gap-2">
-            <PieChart className="size-10 text-muted-foreground/60" />
-            <p className="text-sm font-semibold text-foreground">Belum Ada Anggaran Ditetapkan</p>
-            <p className="text-xs text-muted-foreground max-w-sm">
-              Pasang batas anggaran bulanan per kategori untuk mengontrol pengeluaran Anda.
-            </p>
+      {filteredBudgets.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex size-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+            <PieChart className="size-6 text-slate-400" />
           </div>
-        </Card>
+          <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
+            {searchQuery ? `Tidak ada anggaran untuk "${searchQuery}"` : "No Budget Set Yet"}
+          </p>
+          <p className="text-xs text-slate-500 max-w-sm">
+            {searchQuery
+              ? "Coba cari dengan kata kunci kategori lain atau tambahkan anggaran baru."
+              : "Set monthly limits per category to control your spending."}
+          </p>
+          {!searchQuery && (
+            <Button onClick={openCreateModal} className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 gap-1.5 shadow-sm mt-1">
+              <Plus className="size-4" />
+              + Set Budget
+            </Button>
+          )}
+        </div>
       ) : (
-        <div className="grid gap-4">
-          {budgets.map((budget) => {
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredBudgets.map((budget) => {
             const category = categories.find((c) => c.id === budget.category_id);
             const limit = Number(budget.amount_limit);
             const spent = categorySpentMap[budget.category_id] ?? 0;
-            const percent = limit > 0 ? Math.min(Math.round((spent / limit) * 100), 100) : 0;
-            const exactRatio = limit > 0 ? (spent / limit) * 100 : 0;
-
-            // Indicator Colors
-            let barColor = "bg-emerald-500";
-            let badgeText = "Aman";
-            let badgeTone = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
-            let IconComponent = CheckCircle2;
-
-            if (exactRatio >= 100) {
-              barColor = "bg-rose-500";
-              badgeText = "Melebihi Limit!";
-              badgeTone = "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20";
-              IconComponent = ShieldAlert;
-            } else if (exactRatio >= 80) {
-              barColor = "bg-amber-500";
-              badgeText = "Mendekati Limit";
-              badgeTone = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
-              IconComponent = AlertTriangle;
-            }
+            const remaining = Math.max(0, limit - spent);
+            const percentUsed = limit > 0 ? Math.min(100, Math.round((spent / limit) * 100)) : 0;
+            const percentLeft = Math.max(0, 100 - percentUsed);
 
             return (
-              <Card key={budget.id} className="hover:border-primary/30 transition-all">
-                <CardContent className="p-4 sm:p-5 flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-foreground text-base">
+              <div
+                key={budget.id}
+                className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all hover:border-indigo-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div>
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex size-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                        <PieChart className="size-4.5" />
+                      </div>
+                      <p className="font-bold text-slate-900 dark:text-white text-base">
                         {category?.name ?? "Kategori"}
-                      </span>
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-                          badgeTone
-                        )}
-                      >
-                        <IconComponent className="size-3" />
-                        {badgeText} ({Math.round(exactRatio)}%)
-                      </span>
+                      </p>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -247,7 +278,6 @@ export function BudgetsClient({
                         size="icon"
                         variant="ghost"
                         onClick={() => openEditModal(budget)}
-                        className="size-8"
                       >
                         <Edit2 className="size-3.5 text-muted-foreground" />
                       </Button>
@@ -262,21 +292,34 @@ export function BudgetsClient({
                     </div>
                   </div>
 
-                  {/* Progress Bar Visual */}
-                  <div className="space-y-1.5">
-                    <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={cn("h-full transition-all duration-500 rounded-full", barColor)}
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-                      <span>Terpakai: <strong>{formatRupiah(spent)}</strong></span>
-                      <span>Batas Limit: <strong>{formatRupiah(limit)}</strong></span>
-                    </div>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Used: {formatRupiah(spent)} of {formatRupiah(limit)}
+                  </p>
+
+                  {/* Gradient Progress Bar */}
+                  <div className="mt-2.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        percentUsed >= 100
+                          ? "bg-rose-500"
+                          : percentUsed >= 80
+                          ? "bg-amber-500"
+                          : "bg-gradient-to-r from-blue-500 to-emerald-400"
+                      }`}
+                      style={{ width: `${percentUsed}%` }}
+                    />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <p className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                    {formatRupiah(remaining)} <span className="text-xs font-normal text-slate-500">Remaining</span>
+                  </p>
+                  <span className="text-xs font-semibold text-slate-500 tabular-nums">
+                    {percentLeft}% Left
+                  </span>
+                </div>
+              </div>
             );
           })}
         </div>

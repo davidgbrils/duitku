@@ -1,7 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, PlusCircle, Wallet, Sparkles } from "lucide-react";
+import { ChevronRight, Wallet } from "lucide-react";
 
 import { Reveal } from "@/components/animations/reveal";
 import {
@@ -17,7 +16,6 @@ import { ReceiptScannerDialog } from "@/components/receipts/receipt_scanner";
 import { VoiceButton } from "@/components/voice/voice_button";
 import { TransactionItem } from "@/components/transactions/transaction_item";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import {
   formatMonthShort,
@@ -137,40 +135,33 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-6">
       {/* ---- User Dashboard Brand Hero Banner ---- */}
       <Reveal>
-        <div className="relative overflow-hidden rounded-3xl border bg-gradient-to-r from-primary/10 via-emerald-500/5 to-background p-5 sm:p-6 shadow-sm">
-          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-            <div className="flex items-center gap-4">
-              <div className="relative size-14 sm:size-16 shrink-0 rounded-2xl overflow-hidden shadow-md bg-card p-1.5 border border-primary/20">
-                <Image
-                  src="/images/brand/app_icon_light.png"
-                  alt="Duitku App Icon"
-                  width={64}
-                  height={64}
-                  className="size-full object-contain rounded-xl"
-                  priority
-                />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                    Selamat Datang, {displayName}! 👋
-                  </h1>
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5 font-medium">
-                  <Sparkles className="size-3.5 text-primary shrink-0" />
-                  <span>Kelola Keuanganmu, Lebih Sederhana.</span>
-                </p>
-              </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 py-2">
+          <div className="flex items-center gap-4">
+            <div className="flex size-14 sm:size-16 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-500 shadow-inner dark:bg-slate-800 dark:text-slate-400">
+              <svg className="size-8 fill-current" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              </svg>
             </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                Selamat Datang, {displayName.toUpperCase()}!
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                Kelola Keuanganmu, Lebih Sederhana.
+              </p>
+            </div>
+          </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-              <VoiceButton wallets={walletList} categories={categoryList} />
-              <ReceiptScannerDialog wallets={walletList} categories={categoryList} />
-              <Button render={<Link href="/wallets" />} variant="outline" className="gap-2 shadow-sm">
-                <Wallet className="size-4" />
-                Dompet Saya
-              </Button>
-            </div>
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            <VoiceButton wallets={walletList} categories={categoryList} />
+            <ReceiptScannerDialog wallets={walletList} categories={categoryList} />
+            <Button
+              render={<Link href="/wallets" />}
+              className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 text-sm shadow-sm gap-2"
+            >
+              <Wallet className="size-4" />
+              Dompet Saya
+            </Button>
           </div>
         </div>
       </Reveal>
@@ -192,53 +183,47 @@ export default async function DashboardPage() {
 
       {/* ---- Transaksi Terakhir ---- */}
       <Reveal delay={0.06}>
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-lg font-bold">Transaksi Terakhir</CardTitle>
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              Transaksi Terakhir
+            </h2>
             <Link
               href="/transactions"
-              className="text-primary hover:text-primary/80 flex items-center gap-0.5 text-sm font-medium transition-colors"
+              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1 text-sm font-semibold transition-colors"
             >
               Lihat semua
               <ChevronRight className="size-4" />
             </Link>
-          </CardHeader>
-          <CardContent>
-            {recentList.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                <div className="relative size-16 rounded-2xl overflow-hidden shadow-sm border bg-muted/30 p-2">
-                  <Image
-                    src="/images/brand/logo_icon.png"
-                    alt="Duitku Logo Icon"
-                    width={64}
-                    height={64}
-                    className="size-full object-contain opacity-80"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-foreground">Belum Ada Transaksi Tercatat</p>
-                  <p className="text-xs text-muted-foreground max-w-sm">
-                    Mulai catat pemasukan, pengeluaran, atau scan struk pertama Anda sekarang!
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <ReceiptScannerDialog wallets={walletList} categories={categoryList} />
-                </div>
+          </div>
+
+          {recentList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+              <div className="flex size-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800">
+                <Wallet className="size-6" />
               </div>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {recentList.map((transaction) => (
-                  <TransactionItem
-                    key={transaction.id}
-                    transaction={transaction}
-                    walletName={transaction.wallets?.name ?? "Wallet"}
-                    categoryName={transaction.categories?.name ?? null}
-                  />
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                  Belum Ada Transaksi Tercatat
+                </p>
+                <p className="text-xs text-slate-500 max-w-sm">
+                  Mulai catat pemasukan, pengeluaran, atau scan struk pertama Anda sekarang!
+                </p>
+              </div>
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-2.5">
+              {recentList.map((transaction) => (
+                <TransactionItem
+                  key={transaction.id}
+                  transaction={transaction}
+                  walletName={transaction.wallets?.name ?? "Wallet"}
+                  categoryName={transaction.categories?.name ?? null}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
       </Reveal>
     </div>
   );

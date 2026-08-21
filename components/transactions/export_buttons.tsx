@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Download, FileText, Loader2, Printer } from "lucide-react";
+import { useTransition } from "react";
+import { Download, Loader2, Printer } from "lucide-react";
 
 import {
   exportTransactionsCsvAction,

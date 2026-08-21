@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 const productLinks = [
@@ -8,34 +7,34 @@ const productLinks = [
   { href: "/#faq", label: "FAQ" },
 ] as const;
 
-/** Footer minimal — hanya link ke halaman/section yang benar-benar ada. */
 export function LandingFooter() {
   return (
-    <footer className="border-border border-t">
-      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 px-4 py-10 sm:flex-row sm:items-start sm:justify-between">
+    <footer className="border-t border-white/60 bg-white/60 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/60">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-8 px-4 py-12 sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div className="text-center sm:text-left">
-          <Image
-            src="/images/brand/logo_light.png"
-            alt="Duitku Logo"
-            width={130}
-            height={36}
-            className="h-8 w-auto mx-auto sm:mx-0 object-contain"
-          />
-          <p className="text-muted-foreground mt-2 max-w-xs text-sm">
-            Personal finance tracking yang sederhana & terpercaya.
+          <div className="flex items-center justify-center sm:justify-start gap-2.5">
+            <div className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-md shadow-indigo-500/20 text-white font-extrabold text-base">
+              D
+            </div>
+            <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
+              Duitku
+            </span>
+          </div>
+          <p className="mt-3 max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            Platform modern manajemen keuangan pribadi: multi-wallet, budgeting, pelacakan hutang & piutang, dan scanner struk pintar.
           </p>
         </div>
 
         <nav aria-label="Tautan produk">
-          <p className="text-muted-foreground text-center text-xs font-medium uppercase tracking-wide sm:text-left">
-            Product
+          <p className="text-center text-xs font-bold uppercase tracking-wider text-slate-400 sm:text-left">
+            Produk
           </p>
-          <ul className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1 sm:flex-col sm:gap-y-1.5">
+          <ul className="mt-3 flex flex-wrap justify-center gap-x-6 gap-y-2 sm:flex-col sm:gap-y-2">
             {productLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className="text-xs font-medium text-slate-600 transition-colors hover:text-indigo-600 dark:text-slate-300 dark:hover:text-white"
                 >
                   {link.label}
                 </Link>
@@ -45,33 +44,35 @@ export function LandingFooter() {
         </nav>
 
         <nav aria-label="Tautan akun">
-          <p className="text-muted-foreground text-center text-xs font-medium uppercase tracking-wide sm:text-left">
-            Akun
+          <p className="text-center text-xs font-bold uppercase tracking-wider text-slate-400 sm:text-left">
+            Akun & Akses
           </p>
-          <ul className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1 sm:flex-col sm:gap-y-1.5">
+          <ul className="mt-3 flex flex-wrap justify-center gap-x-6 gap-y-2 sm:flex-col sm:gap-y-2">
             <li>
               <Link
                 href="/login"
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                className="text-xs font-medium text-slate-600 transition-colors hover:text-indigo-600 dark:text-slate-300 dark:hover:text-white"
               >
-                Login
+                Masuk (Login)
               </Link>
             </li>
             <li>
               <Link
                 href="/register"
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                className="text-xs font-medium text-slate-600 transition-colors hover:text-indigo-600 dark:text-slate-300 dark:hover:text-white"
               >
-                Daftar
+                Daftar Akun Baru
               </Link>
             </li>
           </ul>
         </nav>
       </div>
-      <div className="border-border border-t">
-        <p className="text-muted-foreground mx-auto w-full max-w-5xl px-4 py-4 text-center text-xs">
-          © 2026 Duitku
-        </p>
+
+      <div className="border-t border-slate-200/60 dark:border-slate-800">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 text-[11px] text-slate-400">
+          <p>© 2026 Duitku. All rights reserved.</p>
+          <p>Dibuat untuk pengelolaan finansial yang lebih teratur.</p>
+        </div>
       </div>
     </footer>
   );

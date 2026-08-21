@@ -1,0 +1,6 @@
+{
+  "name": "Duitku",
+  "description": "Aplikasi manajemen keuangan pribadi pintar dan elegan dengan pelacakan transaksi, anggaran, transfer antar dompet, hutang, piutang, dan pencatatan berbasis AI.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

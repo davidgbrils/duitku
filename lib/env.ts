@@ -50,3 +50,24 @@ export function getSupabaseEnv(): {
 export function getSiteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
+
+/** Normalisasi base URL: buang trailing "/v1" / trailing slash. */
+function normalizeBaseUrl(raw: string | undefined): string {
+  return (raw ?? "").replace(/\/v1\/?$/, "").replace(/\/+$/, "");
+}
+
+export function isNineRouterConfigured(): boolean {
+  return Boolean(
+    process.env.NINEROUTER_URL &&
+      /^https?:\/\//.test(process.env.NINEROUTER_URL)
+  );
+}
+
+export function getNineRouterEnv(): {
+  url: string;
+  key?: string;
+} {
+  const url = normalizeBaseUrl(process.env.NINEROUTER_URL);
+  const key = process.env.NINEROUTER_KEY?.trim() || undefined;
+  return { url, key };
+}

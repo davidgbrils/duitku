@@ -33,7 +33,7 @@ export const metadata: Metadata = {
  */
 export default function LandingPage() {
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="relative flex min-h-svh flex-col bg-gradient-to-b from-slate-50 via-slate-50/90 to-slate-100/80 text-slate-900 selection:bg-indigo-500 selection:text-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
       <LandingNavbar />
       <main className="flex-1">
         <HeroSection />

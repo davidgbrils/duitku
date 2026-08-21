@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation";
+import { ArrowRight, ArrowRightLeft } from "lucide-react";
 
 import { Reveal } from "@/components/animations/reveal";
 import { DeleteTransferButton } from "@/components/transfers/delete_transfer_button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CreateTransferDialog } from "@/features/transfers/transfer_form";
+import { TransferFundsCard } from "@/features/transfers/transfer_form";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils/date";
 import { formatRupiah } from "@/lib/utils/money";
-import { ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -36,61 +35,70 @@ export default async function TransfersPage() {
   const walletList = wallets ?? [];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Transfer</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Pindahkan uang antar wallet tanpa mengubah total saldo
-          </p>
-        </div>
-        <CreateTransferDialog wallets={walletList} />
-      </div>
+    <div className="flex flex-col gap-8">
+      {/* Transfer Funds Interactive Card */}
+      <Reveal>
+        <TransferFundsCard wallets={walletList} />
+      </Reveal>
 
-      {transferList.length === 0 ? (
-        <div className="bg-card ring-border flex flex-col items-center gap-3 rounded-xl px-6 py-14 text-center ring-1">
-          <p className="text-base font-medium">Belum ada Transfer</p>
-          <p className="text-muted-foreground max-w-sm text-sm">
-            Pindahkan uang antar wallet, mis. tarik tunai dari bank ke dompet.
-          </p>
-          <div className="mt-2">
-            <CreateTransferDialog wallets={walletList} />
+      {/* History of Transfers */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          Riwayat Transfer ({transferList.length})
+        </h2>
+
+        {transferList.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200/90 bg-white px-6 py-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex size-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+              <ArrowRightLeft className="size-6 text-slate-400" />
+            </div>
+            <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Belum ada Transfer
+            </p>
+            <p className="text-xs text-slate-500 max-w-sm">
+              Pindahkan uang antar wallet menggunakan form di atas.
+            </p>
           </div>
-        </div>
-      ) : (
-        <Reveal>
-          <ul className="flex flex-col gap-3">
-            {transferList.map((transfer) => (
-              <li key={transfer.id}>
-                <Card>
-                  <CardContent className="flex items-center justify-between gap-4 px-4 py-3">
+        ) : (
+          <Reveal>
+            <ul className="flex flex-col gap-2.5">
+              {transferList.map((transfer) => (
+                <li key={transfer.id}>
+                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white px-5 py-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div className="flex min-w-0 items-center gap-2 text-sm">
-                        <span className="truncate font-medium">
-                          {transfer.source_wallet?.name ?? "Wallet"}
-                        </span>
-                        <ArrowRight className="text-muted-foreground size-4 shrink-0" />
-                        <span className="truncate font-medium">
-                          {transfer.destination_wallet?.name ?? "Wallet"}
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                        <ArrowRightLeft className="size-4" />
+                      </div>
+
+                      <div className="flex min-w-0 flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-900 dark:text-white truncate">
+                            {transfer.source_wallet?.name ?? "Wallet"}
+                          </span>
+                          <ArrowRight className="size-3.5 text-slate-400 shrink-0" />
+                          <span className="font-semibold text-slate-900 dark:text-white truncate">
+                            {transfer.destination_wallet?.name ?? "Wallet"}
+                          </span>
+                        </div>
+                        <span className="text-xs text-slate-400">
+                          {formatDate(transfer.transfer_date)}
                         </span>
                       </div>
-                      <p className="text-muted-foreground hidden text-xs sm:block">
-                        {formatDate(transfer.transfer_date)}
-                      </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <p className="text-sm font-semibold">
+
+                    <div className="flex shrink-0 items-center gap-3">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
                         {formatRupiah(transfer.amount)}
                       </p>
                       <DeleteTransferButton transferId={transfer.id} />
                     </div>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        )}
+      </div>
     </div>
   );
 }

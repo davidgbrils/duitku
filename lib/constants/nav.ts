@@ -1,7 +1,6 @@
 import {
   ArrowRightLeft,
   Banknote,
-  CreditCard,
   HandCoins,
   LayoutDashboard,
   PieChart,

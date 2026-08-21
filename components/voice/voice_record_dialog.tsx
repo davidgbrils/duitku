@@ -13,11 +13,16 @@ import {
 } from "lucide-react";
 
 import { createTransactionAction } from "@/actions/transactions";
+import { synthesizeSpeechAction } from "@/actions/tts";
 import {
   processVoiceTransactionAction,
   type VoiceChatMessage,
   type VoiceDraft,
 } from "@/actions/voice_ai";
+import {
+  speakBrowserFallback,
+  speakWithRouterBytes,
+} from "@/lib/audio/tts";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,20 +57,66 @@ type Category = Database["public"]["Tables"]["categories"]["Row"];
 
 type VoicePhase = "idle" | "recording" | "processing" | "editing" | "saved";
 
-function speak(text: string): boolean {
+const DEFAULT_VOICE = "edge-tts/id-ID-GadisNeural";
+const ID_VOICES = [
+  { id: "edge-tts/id-ID-GadisNeural", label: "Gadis (Wanita)" },
+  { id: "edge-tts/id-ID-ArdiNeural", label: "Ardi (Pria)" },
+] as const;
+
+const VOICE_STORAGE_KEY = "duitku.tts.voice";
+
+export function loadStoredVoice(): string {
+  if (typeof window === "undefined") {
+    return DEFAULT_VOICE;
+  }
   try {
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      return false;
-    }
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "id-ID";
-    utterance.rate = 1;
-    window.speechSynthesis.speak(utterance);
-    return true;
+    return window.localStorage.getItem(VOICE_STORAGE_KEY) ?? DEFAULT_VOICE;
   } catch {
+    return DEFAULT_VOICE;
+  }
+}
+
+export function storeVoice(voice: string) {
+  try {
+    window.localStorage.setItem(VOICE_STORAGE_KEY, voice);
+  } catch {
+    /* noop */
+  }
+}
+
+/** Indikator status mesin suara: "ai" (9Router) / "browser" (fallback) / "unknown". */
+export type TtsStatus = "ai" | "browser" | "unknown";
+
+/**
+ * Bicara: coba 9Router + voice custom; gagal → speechSynthesis browser.
+ * Meng-update status (via callback) agar UI tahu mesin mana yang aktif.
+ */
+async function speakWithChoice(
+  text: string,
+  voice: string,
+  onStatus: (status: TtsStatus) => void
+): Promise<boolean> {
+  const clean = text.trim();
+  if (!clean) {
     return false;
   }
+
+  const res = await synthesizeSpeechAction(clean, voice);
+  if (res.audioBase64 && !res.error) {
+    onStatus("ai");
+    const played = await speakWithRouterBytes(
+      res.audioBase64,
+      res.format ?? "mpeg"
+    );
+    if (played) {
+      return true;
+    }
+    onStatus("browser");
+    return speakBrowserFallback(clean);
+  }
+
+  onStatus("browser");
+  return speakBrowserFallback(clean);
 }
 
 export function VoiceRecordDialog({
@@ -91,6 +142,10 @@ export function VoiceRecordDialog({
   const [conversation, setConversation] = useState<VoiceChatMessage[]>([]);
   const [draft, setDraft] = useState<VoiceDraft | null>(null);
   const [lastReply, setLastReply] = useState<string | null>(null);
+
+  // Suara (voice custom via 9Router)
+  const [voice, setVoice] = useState(() => loadStoredVoice());
+  const [ttsStatus, setTtsStatus] = useState<TtsStatus>("unknown");
 
   // Form manual (fallback "Edit Manual")
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -224,10 +279,10 @@ export function VoiceRecordDialog({
           ]);
 
           if (ai.confirmed) {
-            const spoke = speak(ai.reply);
-            saveFromDraft(ai.draft, spoke ? 1200 : 0);
+            await speakWithChoice(ai.reply, voice, setTtsStatus);
+            saveFromDraft(ai.draft, 1500);
           } else {
-            speak(ai.reply);
+            await speakWithChoice(ai.reply, voice, setTtsStatus);
             setPhase("idle");
           }
         }
@@ -376,7 +431,7 @@ export function VoiceRecordDialog({
           )}
 
           {conversation.length > 0 && (
-            <ConversationThread conversation={conversation} onRepeat={(text) => speak(text)} />
+            <ConversationThread conversation={conversation} onRepeat={(text) => void speakWithChoice(text, voice, setTtsStatus)} />
           )}
 
           {draft && phase !== "saved" && phase !== "editing" && (
@@ -433,7 +488,7 @@ export function VoiceRecordDialog({
                   Jawab di mikrofon: &quot;ya&quot; untuk simpan, atau koreksi nominal/kategori.
                 </p>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -444,6 +499,25 @@ export function VoiceRecordDialog({
                   <Pencil className="size-3.5" />
                   Edit Manual
                 </Button>
+                <Select
+                  value={voice}
+                  onValueChange={(v) => {
+                    setVoice(v ?? DEFAULT_VOICE);
+                    storeVoice(v ?? DEFAULT_VOICE);
+                  }}
+                  disabled={phase === "processing"}
+                >
+                  <SelectTrigger className="h-9 text-xs w-40">
+                    <SelectValue placeholder="Pilih suara" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ID_VOICES.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {v.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {phase === "recording" ? (
                   <Button
                     onClick={handleStopAndEnd}
@@ -470,6 +544,16 @@ export function VoiceRecordDialog({
                     ? "Tekan mikrofon lalu ucapkan transaksi"
                     : "Tekan mikrofon untuk menjawab/merevisi"}
               </p>
+              {ttsStatus === "ai" && (
+                <p className="text-[10px] text-emerald-600 flex items-center gap-1">
+                  <Volume2 className="size-3" /> Suara AI aktif (9Router)
+                </p>
+              )}
+              {ttsStatus === "browser" && (
+                <p className="text-[10px] text-amber-600 flex items-center gap-1">
+                  <Volume2 className="size-3" /> Suara browser (9Router mati/offline)
+                </p>
+              )}
             </div>
           )}
 

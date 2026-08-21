@@ -4,15 +4,14 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Banknote,
-  Calendar,
-  CheckCircle2,
-  Coins,
-  CreditCard,
+  Check,
+  Copy,
   Edit2,
   Loader2,
+  MessageSquare,
   Plus,
+  Send,
   Trash2,
-  Wallet,
 } from "lucide-react";
 
 import {
@@ -22,7 +21,6 @@ import {
   updateReceivableAction,
 } from "@/actions/receivables";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +40,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { todayIso } from "@/lib/utils/date";
 import { formatRupiah } from "@/lib/utils/money";
-import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
 type Receivable = Database["public"]["Tables"]["receivables"]["Row"];
@@ -64,6 +61,13 @@ export function ReceivablesClient({
 
   const [isPayOpen, setIsPayOpen] = useState(false);
   const [payingReceivable, setPayingReceivable] = useState<Receivable | null>(null);
+
+  // Remind Debtor Modal State
+  const [isRemindOpen, setIsRemindOpen] = useState(false);
+  const [remindReceivable, setRemindReceivable] = useState<Receivable | null>(null);
+  const [remindMessage, setRemindMessage] = useState("");
+  const [remindPhone, setRemindPhone] = useState("");
+  const [copied, setCopied] = useState(false);
 
   // Form State
   const [borrowerName, setBorrowerName] = useState("");
@@ -112,6 +116,34 @@ export function ReceivablesClient({
     setPayNotes("");
     setError(null);
     setIsPayOpen(true);
+  }
+
+  function openRemindModal(rec: Receivable) {
+    setRemindReceivable(rec);
+    setRemindPhone("");
+    setCopied(false);
+    const dateText = rec.due_date ? ` pada tanggal ${rec.due_date}` : "";
+    setRemindMessage(
+      `Halo ${rec.borrower_name}, sekadar mengingatkan terkait pinjaman sebesar ${formatRupiah(
+        Number(rec.remaining_amount)
+      )}${dateText}. Terima kasih banyak ya! 🙏`
+    );
+    setIsRemindOpen(true);
+  }
+
+  function handleCopyReminder() {
+    navigator.clipboard.writeText(remindMessage);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleSendWhatsApp() {
+    const cleanPhone = remindPhone.replace(/[^0-9]/g, "");
+    const formattedPhone = cleanPhone.startsWith("0") ? `62${cleanPhone.slice(1)}` : cleanPhone;
+    const encoded = encodeURIComponent(remindMessage);
+    const waUrl = formattedPhone ? `https://wa.me/${formattedPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+    window.open(waUrl, "_blank");
+    setIsRemindOpen(false);
   }
 
   function handleSaveReceivable() {
@@ -182,152 +214,172 @@ export function ReceivablesClient({
   return (
     <div className="flex flex-col gap-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-emerald-500/20 bg-emerald-500/5">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Sisa Piutang</p>
-              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
-                {formatRupiah(totalRemaining)}
-              </p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Banknote className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="relative overflow-hidden rounded-3xl border border-indigo-500/30 bg-gradient-to-tr from-blue-700 via-indigo-600 to-indigo-500 p-6 text-white shadow-lg shadow-indigo-600/20">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-indigo-100 uppercase tracking-wider">
+              Total Receivables (Total Piutang)
+            </p>
+            <p className="text-3xl font-extrabold tracking-tight text-white tabular-nums">
+              {formatRupiah(totalAmount)}
+            </p>
+            <p className="text-xs text-indigo-200">
+              {receivables.filter((r) => Number(r.remaining_amount) > 0).length} piutang aktif
+            </p>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Total Diterima</p>
-              <p className="text-xl font-bold text-primary mt-1 tabular-nums">
-                {formatRupiah(totalReceived)}
-              </p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-              <CheckCircle2 className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Collected / Total Diterima
+            </p>
+            <p className="text-3xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+              {formatRupiah(totalReceived)}
+            </p>
+            <p className="text-xs text-slate-400">
+              {totalAmount > 0 ? Math.round((totalReceived / totalAmount) * 100) : 100}% telah diterima
+            </p>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Total Pinjaman Diberikan</p>
-              <p className="text-xl font-bold text-foreground mt-1 tabular-nums">
-                {formatRupiah(totalAmount)}
-              </p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-muted text-muted-foreground">
-              <Coins className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs hidden lg:block dark:border-slate-800 dark:bg-slate-900">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Sisa Piutang Belum Diterima
+            </p>
+            <p className="text-3xl font-extrabold tracking-tight text-indigo-600 dark:text-indigo-400 tabular-nums">
+              {formatRupiah(totalRemaining)}
+            </p>
+            <p className="text-xs text-slate-400">
+              Menunggu pelunasan
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Action Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold tracking-tight">Daftar Piutang</h2>
-        <Button onClick={openCreateForm} className="gap-2 shadow-sm font-semibold">
+      <div className="flex items-center justify-between mt-2">
+        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Recent Debtors (Daftar Peminjam)
+        </h2>
+        <Button onClick={openCreateForm} className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 gap-1.5 shadow-sm">
           <Plus className="size-4" />
-          Tambah Piutang
+          + Tambah Piutang
         </Button>
       </div>
 
       {/* Receivable List */}
       {receivables.length === 0 ? (
-        <Card className="p-8 text-center">
-          <div className="flex flex-col items-center justify-center gap-2">
-            <Banknote className="size-10 text-muted-foreground/60" />
-            <p className="text-sm font-semibold text-foreground">Belum Ada Catatan Piutang</p>
-            <p className="text-xs text-muted-foreground max-w-sm">
-              Tidak ada uang yang sedang dipinjamkan. Klik "+ Tambah Piutang" jika ingin mencatat uang yang dipinjam orang lain.
-            </p>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex size-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+            <Banknote className="size-6 text-slate-400" />
           </div>
-        </Card>
+          <p className="text-base font-semibold text-slate-800 dark:text-slate-200">Belum Ada Catatan</p>
+          <p className="text-xs text-slate-500 max-w-sm">
+            Tidak ada uang yang sedang dipinjamkan. Klik &quot;+ Tambah Piutang&quot; jika ingin mencatat uang yang dipinjam orang lain.
+          </p>
+          <Button onClick={openCreateForm} className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 gap-1.5 shadow-sm mt-1">
+            <Plus className="size-4" />
+            + Tambah Piutang
+          </Button>
+        </div>
       ) : (
         <div className="grid gap-3">
           {receivables.map((rec) => {
             const rem = Number(rec.remaining_amount);
+            const total = Number(rec.amount);
+            const received = total - rem;
+            const receivedPct = total > 0 ? Math.min(100, Math.round((received / total) * 100)) : 100;
             const isPaid = rec.status === "paid" || rem === 0;
 
             return (
-              <Card key={rec.id} className="hover:border-primary/30 transition-all">
-                <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1.5 min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-base font-bold text-foreground truncate">
-                        {rec.borrower_name}
-                      </p>
-                      <StatusBadge status={rec.status} />
+              <div
+                key={rec.id}
+                className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all hover:border-indigo-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 text-sm dark:bg-indigo-950 dark:text-indigo-300">
+                      {rec.borrower_name.slice(0, 2).toUpperCase()}
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <Coins className="size-3.5" />
-                        Total Pinjaman: <strong>{formatRupiah(Number(rec.amount))}</strong>
-                      </span>
-                      {rec.due_date && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="size-3.5" />
-                          Janji Bayar: <strong>{rec.due_date}</strong>
-                        </span>
-                      )}
-                    </div>
-                    {rec.notes && (
-                      <p className="text-xs text-muted-foreground/80 italic truncate">
-                        "{rec.notes}"
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-base font-bold text-slate-900 dark:text-white truncate">
+                          {rec.borrower_name}
+                        </p>
+                        <StatusBadge status={rec.status} />
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        {rec.due_date ? `Jatuh tempo: ${rec.due_date}` : "Tanpa jatuh tempo"}
                       </p>
-                    )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0">
-                    <div className="text-left sm:text-right">
-                      <p className="text-[10px] uppercase font-semibold text-muted-foreground">
-                        Sisa Piutang
-                      </p>
-                      <p
-                        className={cn(
-                          "text-base font-bold tabular-nums",
-                          isPaid ? "text-muted-foreground" : "text-emerald-600 dark:text-emerald-400"
-                        )}
-                      >
-                        {formatRupiah(rem)}
-                      </p>
+                  {/* Progress bar */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-indigo-600 transition-all duration-500"
+                        style={{ width: `${receivedPct}%` }}
+                      />
                     </div>
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 tabular-nums shrink-0">
+                      {receivedPct}% diterima
+                    </span>
+                  </div>
+                </div>
 
-                    <div className="flex items-center gap-1.5">
-                      {!isPaid && (
+                <div className="flex items-center gap-3 border-t pt-3 md:border-t-0 md:pt-0 justify-between md:justify-end shrink-0">
+                  <div className="text-left md:text-right">
+                    <p className="text-[10px] uppercase font-semibold text-slate-400">
+                      Sisa Piutang
+                    </p>
+                    <p className="text-base font-bold text-slate-900 dark:text-white tabular-nums">
+                      {formatRupiah(rem)}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {!isPaid && (
+                      <>
                         <Button
                           size="sm"
-                          variant="default"
                           onClick={() => openPayModal(rec)}
-                          className="gap-1 text-xs shadow-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white"
+                          className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-1.5 shadow-sm"
                         >
-                          <Wallet className="size-3.5" />
-                          Terima Pelunasan
+                          Terima Bayar
                         </Button>
-                      )}
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => openEditForm(rec)}
-                        className="size-8"
-                      >
-                        <Edit2 className="size-3.5 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleDeleteReceivable(rec.id)}
-                        className="size-8 text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => openRemindModal(rec)}
+                          title="Kirim Pengingat WhatsApp"
+                          className="size-8 rounded-full text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                        >
+                          <MessageSquare className="size-3.5" />
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => openEditForm(rec)}
+                      className="size-8 rounded-full text-slate-400 hover:bg-slate-100"
+                    >
+                      <Edit2 className="size-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleDeleteReceivable(rec.id)}
+                      className="size-8 rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>
@@ -502,6 +554,63 @@ export function ReceivablesClient({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Kirim Pengingat WhatsApp */}
+      <Dialog open={isRemindOpen} onOpenChange={setIsRemindOpen}>
+        <DialogContent className="max-w-md rounded-3xl p-6">
+          <DialogHeader>
+            <div className="flex size-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 mb-2">
+              <MessageSquare className="size-5" />
+            </div>
+            <DialogTitle className="text-xl font-bold">Kirim Pengingat Piutang</DialogTitle>
+            <DialogDescription className="text-xs">
+              Kirim pesan pengingat ramah ke <strong className="text-slate-800 dark:text-slate-200">{remindReceivable?.borrower_name}</strong> via WhatsApp atau salin ke clipboard.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Nomor WhatsApp (Opsional)</Label>
+              <Input
+                placeholder="Contoh: 08123456789"
+                value={remindPhone}
+                onChange={(e) => setRemindPhone(e.target.value)}
+                className="rounded-2xl"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Draft Pesan</Label>
+              <Textarea
+                rows={4}
+                value={remindMessage}
+                onChange={(e) => setRemindMessage(e.target.value)}
+                className="rounded-2xl text-xs leading-relaxed"
+              />
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCopyReminder}
+                className="flex-1 rounded-2xl gap-1.5 text-xs font-semibold"
+              >
+                {copied ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
+                {copied ? "Tersalin!" : "Salin Pesan"}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSendWhatsApp}
+                className="flex-1 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 text-xs font-bold shadow-md shadow-emerald-500/20"
+              >
+                <Send className="size-4" />
+                Kirim WhatsApp
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

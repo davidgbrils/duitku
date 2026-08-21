@@ -87,32 +87,35 @@ export function TransactionFilters({
   return (
     <form
       onSubmit={applyFilters}
-      className="bg-card ring-border rounded-xl p-4 ring-1"
+      className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
     >
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="grid min-w-52 flex-1 gap-1.5">
-          <Label htmlFor="transaction-search">Cari</Label>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Row 1: Search, Type, Category */}
+        <div className="grid gap-1.5">
+          <Label htmlFor="transaction-search" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Cari
+          </Label>
           <div className="relative">
-            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
             <Input
               id="transaction-search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Cari deskripsi transaksi..."
-              className="pl-8"
+              placeholder="Cari..."
+              className="pl-9 rounded-xl bg-slate-50/50 border-slate-200 dark:bg-slate-800 dark:border-slate-700"
             />
           </div>
         </div>
 
         <FilterSelect
-          label="Tipe"
+          label="Type"
           value={type || ALL_VALUE}
           onChange={(v) => setType(v && v !== ALL_VALUE ? v : "")}
           options={TYPE_OPTIONS}
         />
 
         <FilterSelect
-          label="Kategori"
+          label="Category"
           value={category || ALL_VALUE}
           onChange={(v) => setCategory(v && v !== ALL_VALUE ? v : "")}
           options={[
@@ -121,6 +124,7 @@ export function TransactionFilters({
           ]}
         />
 
+        {/* Row 2: Wallet, From Date, To Date */}
         <FilterSelect
           label="Wallet"
           value={wallet || ALL_VALUE}
@@ -132,48 +136,61 @@ export function TransactionFilters({
         />
 
         <div className="grid gap-1.5">
-          <Label htmlFor="filter-from">Dari</Label>
+          <Label htmlFor="filter-from" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            From Date
+          </Label>
           <Input
             id="filter-from"
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="h-8 w-36"
+            className="rounded-xl bg-slate-50/50 border-slate-200 dark:bg-slate-800 dark:border-slate-700"
           />
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="filter-to">Sampai</Label>
+          <Label htmlFor="filter-to" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            To Date
+          </Label>
           <Input
             id="filter-to"
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="h-8 w-36"
+            className="rounded-xl bg-slate-50/50 border-slate-200 dark:bg-slate-800 dark:border-slate-700"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="w-48">
+          <FilterSelect
+            label="Sort"
+            value={sort}
+            onChange={(v) => setSort(v ?? "newest")}
+            options={SORT_OPTIONS}
           />
         </div>
 
-        <FilterSelect
-          label="Urutkan"
-          value={sort}
-          onChange={(v) => setSort(v ?? "newest")}
-          options={SORT_OPTIONS}
-        />
-
-        <div className="flex gap-2">
-          <Button type="submit" size="sm">
-            <Filter />
-            Terapkan
-          </Button>
+        <div className="flex items-center gap-2">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={resetFilters}
             disabled={!q && activeFilterCount === 0 && sort === "newest"}
+            className="rounded-full text-xs font-medium"
           >
-            <RotateCcw />
+            <RotateCcw className="size-3.5 mr-1" />
             Reset
+          </Button>
+          <Button
+            type="submit"
+            size="sm"
+            className="rounded-full bg-[#1E293B] hover:bg-slate-800 text-white text-xs font-medium px-4"
+          >
+            <Filter className="size-3.5 mr-1" />
+            Terapkan Filter
           </Button>
         </div>
       </div>
@@ -192,14 +209,12 @@ function FilterSelect({
   onChange: (value: string | null) => void;
   options: readonly { value: string; label: string }[];
 }) {
-  // Base UI hanya menampilkan label bila `items` diberikan ke Root;
-  // tanpa ini trigger menampilkan value mentah (mis. "__all", UUID).
   const items = Object.fromEntries(options.map((o) => [o.value, o.label]));
   return (
     <div className="grid gap-1.5">
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{label}</span>
       <Select value={value} onValueChange={onChange} items={items}>
-        <SelectTrigger className="w-36">
+        <SelectTrigger className="w-full rounded-xl bg-slate-50/50 border-slate-200 dark:bg-slate-800 dark:border-slate-700">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

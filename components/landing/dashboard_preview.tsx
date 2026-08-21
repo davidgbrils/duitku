@@ -15,7 +15,6 @@ import type { Database } from "@/types/database";
 
 type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
 
-/** Data contoh — dipakai SEMUA komponen asli Duitku, bukan gambar statis. */
 const trendData: MonthlyTrendPoint[] = [
   { label: "Mar", income: 4500000, expense: 3100000 },
   { label: "Apr", income: 5200000, expense: 3600000 },
@@ -78,51 +77,53 @@ const recentTransactions: Transaction[] = [
   },
 ];
 
-/**
- * Preview dashboard — komponen Duitku ASLI dengan data contoh, sehingga
- * selalu konsisten dengan aplikasi sebenarnya.
- */
 export function DashboardPreview() {
   return (
     <section
       aria-labelledby="preview-heading"
-      className="border-border border-y bg-muted/40"
+      className="relative scroll-mt-20 border-y border-white/60 bg-slate-50/50 py-16 sm:py-24 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/40"
     >
-      <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-20">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <Reveal>
-          <h2
-            id="preview-heading"
-            className="text-center text-2xl font-semibold tracking-tight sm:text-3xl"
-          >
-            Kondisi keuanganmu, sekilas
-          </h2>
-          <p className="text-muted-foreground mx-auto mt-2 max-w-xl text-center text-sm sm:text-base">
-            Ini dashboard asli Duitku — saldo, pemasukan vs pengeluaran, dan
-            ringkasan bulanan dalam satu layar.
-          </p>
+          <div className="text-center">
+            <span className="inline-block rounded-full border border-indigo-200/80 bg-white/70 px-3.5 py-1 text-xs font-semibold text-indigo-700 shadow-xs backdrop-blur-md dark:border-indigo-800/80 dark:bg-slate-900/70 dark:text-indigo-300">
+              Live Interactive UI
+            </span>
+            <h2
+              id="preview-heading"
+              className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white"
+            >
+              Kondisi Keuanganmu, Sekilas & Nyata
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-slate-600 sm:text-base dark:text-slate-300">
+              Ini adalah tampilan visual asli dashboard Duitku — saldo multi-wallet, kurva tren, dan pembagian kategori.
+            </p>
+          </div>
         </Reveal>
 
         <Reveal delay={0.08}>
-          <div className="mt-10 flex flex-col gap-6">
-            <SummaryCards
-              totalBalance={4250000}
-              monthIncome={6500000}
-              monthExpense={2250000}
-            />
-            <div className="grid gap-6 lg:grid-cols-2">
-              <MonthlyTrendChart data={trendData} />
-              <CategoryBreakdown items={breakdownItems} total={2250000} />
+          <div className="mt-12 rounded-3xl border border-white/80 bg-white/60 p-6 sm:p-8 shadow-[0_20px_50px_rgba(79,70,229,0.08)] backdrop-blur-2xl dark:border-slate-800/80 dark:bg-slate-900/60">
+            <div className="flex flex-col gap-6">
+              <SummaryCards
+                totalBalance={4250000}
+                monthIncome={6500000}
+                monthExpense={2250000}
+              />
+              <div className="grid gap-6 lg:grid-cols-2">
+                <MonthlyTrendChart data={trendData} />
+                <CategoryBreakdown items={breakdownItems} total={2250000} />
+              </div>
+              <ul className="flex flex-col gap-3">
+                {recentTransactions.map((transaction) => (
+                  <TransactionItem
+                    key={transaction.id}
+                    transaction={transaction}
+                    walletName="Bank BCA"
+                    categoryName="Makanan & Kebutuhan"
+                  />
+                ))}
+              </ul>
             </div>
-            <ul className="flex flex-col gap-3">
-              {recentTransactions.map((transaction) => (
-                <TransactionItem
-                  key={transaction.id}
-                  transaction={transaction}
-                  walletName="Bank BCA"
-                  categoryName="Makanan & Kebutuhan"
-                />
-              ))}
-            </ul>
           </div>
         </Reveal>
       </div>

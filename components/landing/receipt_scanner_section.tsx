@@ -8,76 +8,71 @@ import {
 } from "lucide-react";
 
 import { Reveal } from "@/components/animations/reveal";
-import { Button } from "@/components/ui/button";
 
 const scanSteps = [
-  { icon: Camera, label: "Upload struk" },
-  { icon: Sparkles, label: "AI membaca detail" },
-  { icon: BadgeCheck, label: "Kamu review" },
-  { icon: ScanLine, label: "Transaksi tercatat" },
+  { icon: Camera, label: "Upload / Foto Struk", desc: "Kamera atau file foto langsung di browser" },
+  { icon: Sparkles, label: "OCR Deteksi Instan", desc: "Membaca tanggal, nominal, dan toko" },
+  { icon: BadgeCheck, label: "Review & Koreksi", desc: "Pastikan nominal dan kategori tepat" },
+  { icon: ScanLine, label: "Tercatat Otomatis", desc: "Saldo & riwayat langsung ter-update" },
 ] as const;
 
-/**
- * Section Scan Struk — fitur ini SUDAH tersedia (bukan klaim kosong):
- * foto → OCR di browser → review & konfirmasi → transaksi tersimpan.
- */
 export function ReceiptScannerSection() {
   return (
     <section
       aria-labelledby="scan-heading"
-      className="scroll-mt-20"
+      className="relative scroll-mt-20 py-16 sm:py-24"
     >
-      <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-20">
-        <div className="bg-card ring-border overflow-hidden rounded-2xl ring-1">
-          <div className="grid items-center gap-8 p-6 sm:p-10 lg:grid-cols-2">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+        <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-gradient-to-br from-white/80 via-white/60 to-indigo-50/40 p-8 sm:p-12 shadow-[0_20px_50px_rgba(79,70,229,0.08)] backdrop-blur-2xl dark:border-slate-800/80 dark:bg-slate-900/80">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
             <Reveal>
               <div>
-                <span className="bg-success/10 text-success inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1 text-xs font-semibold text-emerald-700 backdrop-blur-sm dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
                   <BadgeCheck className="size-3.5" />
-                  Sudah Tersedia
+                  Fitur Unggulan Siap Pakai
                 </span>
                 <h2
                   id="scan-heading"
-                  className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl"
+                  className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white"
                 >
-                  Capek input transaksi satu-satu?
-                  <span className="text-primary block">Scan aja.</span>
+                  Malas input nominal manual?{" "}
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent block">
+                    Tinggal Scan Struk.
+                  </span>
                 </h2>
-                <p className="text-muted-foreground mt-3 text-sm leading-relaxed sm:text-base">
-                  Foto struk belanja, Duitku membacanya, kamu tinggal review —
-                  transaksi langsung tercatat. Hasil bacaannya tidak pernah
-                  langsung tersimpan: kamu selalu bisa mengoreksi sebelum
-                  disimpan.
+                <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-300">
+                  Cukup foto struk belanja minimarket atau restoran. Duitku membaca total nominal dan tanggal transaksi secara instan tanpa mengunggah foto pribadimu ke server publik.
                 </p>
-                <Button
-                  size="lg"
-                  className="mt-6"
-                  render={<Link href="/register" />}
-                >
-                  Coba Scan Struk
-                  <ArrowRight data-icon="inline-end" />
-                </Button>
+                <div className="mt-8">
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all hover:from-blue-700 hover:to-indigo-700 active:scale-95"
+                  >
+                    <span>Coba Scan Struk Gratis</span>
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </div>
               </div>
             </Reveal>
 
             <Reveal delay={0.1}>
-              <ol className="flex flex-col gap-3">
+              <ol className="flex flex-col gap-3.5">
                 {scanSteps.map((step, index) => (
                   <li
                     key={step.label}
-                    className="bg-muted/50 flex items-center gap-3 rounded-xl px-4 py-3"
+                    className="flex items-center gap-4 rounded-2xl border border-white/80 bg-white/75 p-4 shadow-2xs backdrop-blur-md transition-all hover:bg-white/95 dark:border-slate-800 dark:bg-slate-800/70"
                   >
-                    <span className="bg-card ring-border flex size-9 shrink-0 items-center justify-center rounded-lg ring-1">
-                      <step.icon className="text-primary size-4" />
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shadow-2xs dark:bg-indigo-950 dark:text-indigo-400">
+                      <step.icon className="size-5" />
                     </span>
-                    <span className="flex-1 text-sm font-medium">
-                      {step.label}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{step.label}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{step.desc}</p>
+                    </div>
                     {index < scanSteps.length - 1 && (
-                      <ArrowRight
-                        aria-hidden
-                        className="text-muted-foreground size-4 rotate-90 lg:rotate-0"
-                      />
+                      <span className="text-xs font-bold text-slate-300 dark:text-slate-600">
+                        0{index + 1}
+                      </span>
                     )}
                   </li>
                 ))}

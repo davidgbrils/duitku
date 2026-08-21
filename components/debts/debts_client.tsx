@@ -3,12 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  AlertCircle,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Coins,
-  CreditCard,
   Edit2,
   HandCoins,
   Loader2,
@@ -23,7 +17,6 @@ import {
   updateDebtAction,
 } from "@/actions/debts";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +36,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { todayIso } from "@/lib/utils/date";
 import { formatRupiah } from "@/lib/utils/money";
-import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
 type Debt = Database["public"]["Tables"]["debts"]["Row"];
@@ -177,152 +169,155 @@ export function DebtsClient({ debts, wallets }: { debts: Debt[]; wallets: Wallet
   return (
     <div className="flex flex-col gap-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-destructive/20 bg-destructive/5">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Sisa Hutang</p>
-              <p className="text-xl font-bold text-destructive mt-1 tabular-nums">
-                {formatRupiah(totalRemaining)}
-              </p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-destructive/10 text-destructive">
-              <HandCoins className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="relative overflow-hidden rounded-3xl border border-indigo-500/30 bg-gradient-to-tr from-blue-700 via-indigo-600 to-indigo-500 p-6 text-white shadow-lg shadow-indigo-600/20">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-indigo-100 uppercase tracking-wider">
+              Total Debt (Total Pinjaman)
+            </p>
+            <p className="text-3xl font-extrabold tracking-tight text-white tabular-nums">
+              {formatRupiah(totalAmount)}
+            </p>
+            <p className="text-xs text-indigo-200">
+              {debts.filter((d) => Number(d.remaining_amount) > 0).length} pinjaman aktif
+            </p>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Total Terbayar</p>
-              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
-                {formatRupiah(totalPaid)}
-              </p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Sisa Hutang Belum Lunas
+            </p>
+            <p className="text-3xl font-extrabold tracking-tight text-rose-600 dark:text-rose-400 tabular-nums">
+              {formatRupiah(totalRemaining)}
+            </p>
+            <p className="text-xs text-slate-400">
+              Total terbayar: {formatRupiah(totalPaid)}
+            </p>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Total Pinjaman</p>
-              <p className="text-xl font-bold text-foreground mt-1 tabular-nums">
-                {formatRupiah(totalAmount)}
-              </p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-              <Coins className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs hidden lg:block dark:border-slate-800 dark:bg-slate-900">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Total Terbayar
+            </p>
+            <p className="text-3xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+              {formatRupiah(totalPaid)}
+            </p>
+            <p className="text-xs text-slate-400">
+              {totalAmount > 0 ? Math.round((totalPaid / totalAmount) * 100) : 100}% lunas
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Action Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold tracking-tight">Daftar Hutang</h2>
-        <Button onClick={openCreateForm} className="gap-2 shadow-sm font-semibold">
+      <div className="flex items-center justify-between mt-2">
+        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Your Creditors (Daftar Pemberi Pinjaman)
+        </h2>
+        <Button onClick={openCreateForm} className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 gap-1.5 shadow-sm">
           <Plus className="size-4" />
-          Tambah Hutang
+          + Add Debt
         </Button>
       </div>
 
       {/* Debt List */}
       {debts.length === 0 ? (
-        <Card className="p-8 text-center">
-          <div className="flex flex-col items-center justify-center gap-2">
-            <HandCoins className="size-10 text-muted-foreground/60" />
-            <p className="text-sm font-semibold text-foreground">Belum Ada Catatan Hutang</p>
-            <p className="text-xs text-muted-foreground max-w-sm">
-              Semua catatan pinjaman Anda bersih! Klik "+ Tambah Hutang" jika ingin mencatat kewajiban baru.
-            </p>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex size-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+            <HandCoins className="size-6 text-slate-400" />
           </div>
-        </Card>
+          <p className="text-base font-semibold text-slate-800 dark:text-slate-200">Belum Ada Catatan</p>
+          <p className="text-xs text-slate-500 max-w-sm">
+            Semua catatan pinjaman Anda bersih! Klik &quot;+ Add Debt&quot; jika ingin mencatat kewajiban baru.
+          </p>
+          <Button onClick={openCreateForm} className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 gap-1.5 shadow-sm mt-1">
+            <Plus className="size-4" />
+            + Add Debt
+          </Button>
+        </div>
       ) : (
         <div className="grid gap-3">
           {debts.map((debt) => {
             const rem = Number(debt.remaining_amount);
+            const total = Number(debt.amount);
+            const paid = total - rem;
+            const paidPct = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 100;
             const isPaid = debt.status === "paid" || rem === 0;
 
             return (
-              <Card key={debt.id} className="hover:border-primary/30 transition-all">
-                <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1.5 min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-base font-bold text-foreground truncate">
-                        {debt.lender_name}
-                      </p>
-                      <StatusBadge status={debt.status} />
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <Coins className="size-3.5" />
-                        Total: <strong>{formatRupiah(Number(debt.amount))}</strong>
+              <div
+                key={debt.id}
+                className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all hover:border-indigo-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex items-center gap-2.5">
+                    <p className="text-base font-bold text-slate-900 dark:text-white truncate">
+                      {debt.lender_name}
+                    </p>
+                    <StatusBadge status={debt.status} />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                    <span>
+                      Amount Owed: <strong className="text-slate-800 dark:text-slate-200 font-semibold">{formatRupiah(total)}</strong>
+                    </span>
+                    {debt.due_date && (
+                      <span>
+                        Due Date: <strong className="text-slate-800 dark:text-slate-200 font-semibold">{debt.due_date}</strong>
                       </span>
-                      {debt.due_date && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="size-3.5" />
-                          Jatuh Tempo: <strong>{debt.due_date}</strong>
-                        </span>
-                      )}
-                    </div>
-                    {debt.notes && (
-                      <p className="text-xs text-muted-foreground/80 italic truncate">
-                        "{debt.notes}"
-                      </p>
                     )}
+                    <span>
+                      Sisa: <strong className="text-rose-600 dark:text-rose-400 font-semibold">{formatRupiah(rem)}</strong>
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0">
-                    <div className="text-left sm:text-right">
-                      <p className="text-[10px] uppercase font-semibold text-muted-foreground">
-                        Sisa Hutang
-                      </p>
-                      <p
-                        className={cn(
-                          "text-base font-bold tabular-nums",
-                          isPaid ? "text-muted-foreground" : "text-destructive"
-                        )}
-                      >
-                        {formatRupiah(rem)}
-                      </p>
+                  {/* Progress bar */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-indigo-600 transition-all duration-500"
+                        style={{ width: `${paidPct}%` }}
+                      />
                     </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {!isPaid && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => openPayModal(debt)}
-                          className="gap-1 text-xs shadow-sm font-medium"
-                        >
-                          <CreditCard className="size-3.5" />
-                          Bayar
-                        </Button>
-                      )}
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => openEditForm(debt)}
-                        className="size-8"
-                      >
-                        <Edit2 className="size-3.5 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleDeleteDebt(debt.id)}
-                        className="size-8 text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 tabular-nums shrink-0">
+                      {paidPct}% paid
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+
+                <div className="flex items-center gap-2 border-t pt-3 md:border-t-0 md:pt-0 justify-end shrink-0">
+                  {!isPaid && (
+                    <Button
+                      size="sm"
+                      onClick={() => openPayModal(debt)}
+                      className="rounded-full border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 text-xs font-semibold px-4 py-1.5 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    >
+                      Pay Now
+                    </Button>
+                  )}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => openEditForm(debt)}
+                    className="size-8 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  >
+                    <Edit2 className="size-3.5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleDeleteDebt(debt.id)}
+                    className="size-8 rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
             );
           })}
         </div>

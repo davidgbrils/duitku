@@ -241,71 +241,48 @@ Fitur tersebut dapat dipertimbangkan setelah core personal finance stabil.
 
 ---
 
-# 8. Nice To Have
+# 8. Core & Extended Features (Implemented)
 
-Fitur berikut dapat dikembangkan setelah MVP core stabil:
+Fitur-fitur yang telah diimplementasikan dalam Duitku:
 
-### Debt
+### Core Management
+* **Authentication**: Register, Login, Logout, Protected Session via Supabase RLS.
+* **Wallets**: Multi-wallet management (Cash, Bank, E-Wallet), balance calculation, and saldo adjustments.
+* **Categories**: Income & Expense category management dengan ikon dinamis.
+* **Transactions**: Pencatatan pemasukan & pengeluaran, visualisasi tagihan & nominal, filter multi-kriteria.
+* **Transfers**: Pemindahan saldo antar-wallet secara atomic tanpa mempengaruhi laba bersih.
+* **Dashboard**: 4 metric cards, spline area chart, category expense breakdown, recent transaction list, quick search.
 
-* Create Debt
-* Debt payment
-* Remaining debt
-* Due date
-* Debt status
-
-### Receivable
-
-* Create Receivable
-* Payment
-* Remaining receivable
-* Due date
-* Receivable status
-
-### Budget
-
-* Monthly budget
-* Category budget
-* Budget progress
-* Budget warning
-
-### Reports
-
-* Monthly report
-* Yearly report
-* Category breakdown
-* Cash flow report
-
-### Export
-
-* CSV
-* PDF
+### Extended Financial Features
+* **Debt Management (Hutang)**:
+  * Pencatatan pinjaman (pemberi pinjaman, nominal total, jatuh tempo, catatan).
+  * Pembayaran cicilan / pelunasan bertahap dengan update saldo wallet otomatis.
+  * Indikator progress bar persentase terlunasi (`% paid`).
+* **Receivable Management (Piutang)**:
+  * Pencatatan uang yang dipinjamkan ke pihak lain.
+  * Penerimaan pembayaran cicilan / pelunasan ke wallet.
+  * **WhatsApp Reminder (`RemindDebtorDialog`)**: Pengingat pembayaran via WhatsApp (`wa.me`) dengan template pesan otomatis dan fitur salin pesan.
+* **Budget Planning (Anggaran)**:
+  * Penetapan batas anggaran bulanan per kategori.
+  * Indikator progres konsumsi anggaran (Aman, Mendekati Limit, Melebihi Limit).
+  * Real-time search filter untuk pencarian kategori anggaran.
+* **Smart Input & AI Utilities**:
+  * **Receipt Scanner (OCR)**: Pemindaian struk belanja otomatis mengekstrak nominal, tanggal, dan kategori rekomendasi.
+  * **Voice Input (Catat Suara)**: Perekaman suara berbasis Web Speech API untuk konversi ucapan ke form transaksi otomatis.
+* **Data Export**:
+  * Ekspor transaksi terfilter ke format CSV.
+  * Print report transaksi siap cetak.
 
 ---
 
-# 9. Future Features
+# 9. Future Roadmap Features
 
-Tahap lebih lanjut:
+Tahap pengembangan berikutnya:
 
-* Receipt upload
-* OCR receipt
-* Recurring transactions
-* Financial goals
-* Advanced financial analytics
-* AI financial insights
-* Notifications
-* Subscription management
-* Premium features
-
-Tahap jauh:
-
-* QRIS
-* Payment gateway
-* Payment receiving
-* Settlement
-* Withdraw
-* Bank integration
-
-Fitur payment **tidak boleh diasumsikan sebagai bagian dari core Wallet pada MVP**.
+* Recurring / scheduled automatic transactions.
+* Financial goals / target tabungan dengan target tanggal.
+* Visual laporan tahunan (Yearly financial insights & multi-period comparison).
+* Integrasi QRIS dinamis (pada fase enterprise/bisnis).
 
 ---
 

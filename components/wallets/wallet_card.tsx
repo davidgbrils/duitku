@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import {
+  Coins,
+  Landmark,
+  Loader2,
+  Smartphone,
+  Trash2,
+  Wallet as WalletIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Loader2, Trash2, Wallet as WalletIcon } from "lucide-react";
 
 import { deleteWalletAction } from "@/actions/wallets";
 import {
@@ -18,13 +25,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { formatRupiah } from "@/lib/utils/money";
 import type { Database } from "@/types/database";
 
@@ -38,6 +38,24 @@ const typeLabels: Record<Wallet["type"], string> = {
   ewallet: "E-Wallet",
   other: "Lainnya",
 };
+
+/** Pilih element icon sesuai tipe/nama wallet (mendekati referensi Stitch). */
+function walletIconFor(wallet: Wallet): React.ReactElement {
+  const name = wallet.name.toLowerCase();
+  if (name.includes("bank") || /bca|bri|bni|mandiri|btn|permata|hsbc/i.test(name)) {
+    return <Landmark className="size-4" />;
+  }
+  if (wallet.type === "ewallet" || /dana|gopay|ovo|shopeepay|linkaja/i.test(name)) {
+    return <Smartphone className="size-4" />;
+  }
+  if (wallet.type === "cash" || /cash|tunai|uang/i.test(name)) {
+    return <Coins className="size-4" />;
+  }
+  if (wallet.type === "bank") {
+    return <Landmark className="size-4" />;
+  }
+  return <WalletIcon className="size-4" />;
+}
 
 export function WalletCard({ wallet }: { wallet: Wallet }) {
   const router = useRouter();
@@ -57,27 +75,26 @@ export function WalletCard({ wallet }: { wallet: Wallet }) {
   };
 
   return (
-    <Card
+    <div
       data-active={wallet.is_active}
-      className="data-[active=false]:opacity-60"
+      className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all duration-200 hover:border-indigo-300 hover:shadow-md data-[active=false]:opacity-60 dark:border-slate-800 dark:bg-slate-900"
     >
-      <CardHeader className="flex-row items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="bg-muted flex size-8 items-center justify-center rounded-lg">
-            <WalletIcon className="size-4" />
-          </span>
-          <div>
-            <CardTitle>{wallet.name}</CardTitle>
-            <CardDescription>{typeLabels[wallet.type]}</CardDescription>
-          </div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex size-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shadow-xs dark:bg-indigo-950/60 dark:text-indigo-400">
+          {walletIconFor(wallet)}
         </div>
+
         <div className="flex items-center gap-1">
           <EditWalletDialog wallet={wallet} />
           <AlertDialog>
             <AlertDialogTrigger
               render={
-                <Button variant="ghost" size="icon-sm">
-                  <Trash2 />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/50"
+                >
+                  <Trash2 className="size-4" />
                   <span className="sr-only">Hapus {wallet.name}</span>
                 </Button>
               }
@@ -94,7 +111,7 @@ export function WalletCard({ wallet }: { wallet: Wallet }) {
               {deleteError && (
                 <p
                   role="alert"
-                  className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm"
+                  className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
                 >
                   {deleteError}
                 </p>
@@ -108,7 +125,7 @@ export function WalletCard({ wallet }: { wallet: Wallet }) {
                 >
                   {isPending ? (
                     <>
-                      <Loader2 className="animate-spin" />
+                      <Loader2 className="animate-spin mr-1" />
                       Menghapus...
                     </>
                   ) : (
@@ -119,17 +136,29 @@ export function WalletCard({ wallet }: { wallet: Wallet }) {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-xl font-semibold tracking-tight">
+      </div>
+
+      <div className="mt-4 space-y-1">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            {wallet.name}
+          </p>
+          <span className="text-[11px] font-medium text-slate-400">
+            {typeLabels[wallet.type]}
+          </span>
+        </div>
+        <p className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
           {formatRupiah(wallet.current_balance)}
         </p>
-        {!wallet.is_active && (
-          <Badge variant="secondary" className="mt-1">
+      </div>
+
+      {!wallet.is_active && (
+        <div className="mt-2">
+          <Badge variant="secondary" className="text-xs">
             Nonaktif
           </Badge>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }

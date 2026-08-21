@@ -1,24 +1,16 @@
 "use client";
 
-import { motion } from "motion/react";
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  PiggyBank,
+  ArrowDown,
+  ArrowUp,
   TrendingUp,
+  Wallet,
 } from "lucide-react";
 
 import { AnimatedRupiah } from "@/components/animations/animated_rupiah";
-import { Card, CardContent } from "@/components/ui/card";
-import { fadeInUp, staggerContainer } from "@/lib/animations/motion";
 import { formatSignedRupiah } from "@/lib/utils/money";
 import { cn } from "@/lib/utils";
 
-/**
- * Kartu ringkasan dashboard (TASK-0801) dengan entrance stagger dan
- * count-up Rupiah (TASK-1005). Animasi otomatis diredam bagi user
- * prefers-reduced-motion (MotionConfig + useReducedMotion).
- */
 export function SummaryCards({
   totalBalance,
   monthIncome,
@@ -31,92 +23,92 @@ export function SummaryCards({
   const netCashFlow = monthIncome - monthExpense;
 
   return (
-    <motion.div
-      variants={staggerContainer}
-      initial="hidden"
-      animate="visible"
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-    >
-      <SummaryCard
-        label="Total Saldo"
-        icon={<PiggyBank className="size-5" />}
-        iconClassName="bg-primary/10 text-primary"
-      >
-        <AnimatedRupiah value={totalBalance} />
-      </SummaryCard>
-
-      <SummaryCard
-        label="Pemasukan Bulan Ini"
-        icon={<ArrowDownLeft className="size-5" />}
-        iconClassName="bg-success/10 text-success"
-      >
-        <AnimatedRupiah value={monthIncome} />
-      </SummaryCard>
-
-      <SummaryCard
-        label="Pengeluaran Bulan Ini"
-        icon={<ArrowUpRight className="size-5" />}
-        iconClassName="bg-destructive/10 text-destructive"
-      >
-        <AnimatedRupiah value={monthExpense} />
-      </SummaryCard>
-
-      <SummaryCard
-        label="Arus Kas Bersih"
-        icon={<TrendingUp className="size-5" />}
-        iconClassName={cn(
-          netCashFlow >= 0
-            ? "bg-success/10 text-success"
-            : "bg-destructive/10 text-destructive"
-        )}
-        valueClassName={cn(
-          netCashFlow >= 0 ? "text-success" : "text-destructive"
-        )}
-      >
-        {formatSignedRupiah(netCashFlow, netCashFlow >= 0)}
-      </SummaryCard>
-    </motion.div>
-  );
-}
-
-function SummaryCard({
-  label,
-  icon,
-  iconClassName,
-  valueClassName,
-  children,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  iconClassName: string;
-  valueClassName?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <motion.div variants={fadeInUp}>
-      <Card>
-        <CardContent className="flex items-center gap-4 px-5 py-4">
-          <span
-            className={cn(
-              "flex size-10 shrink-0 items-center justify-center rounded-xl",
-              iconClassName
-            )}
-          >
-            {icon}
-          </span>
-          <div className="min-w-0">
-            <p className="text-muted-foreground text-xs font-medium">{label}</p>
-            <p
-              className={cn(
-                "truncate text-lg font-semibold tracking-tight",
-                valueClassName
-              )}
-            >
-              {children}
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 animate-in fade-in duration-300">
+      {/* 1. Total Saldo */}
+      <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1.5 min-w-0">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              Total Saldo
+            </p>
+            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white truncate">
+              <AnimatedRupiah value={totalBalance} />
             </p>
           </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-blue-200/80 bg-blue-50/80 text-blue-600 shadow-sm shadow-blue-500/10 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-400">
+            <Wallet className="size-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Pemasukan Bulan Ini */}
+      <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1.5 min-w-0">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              Pemasukan Bulan Ini
+            </p>
+            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 truncate">
+              <AnimatedRupiah value={monthIncome} />
+            </p>
+          </div>
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-emerald-200/80 bg-emerald-50/80 text-emerald-600 shadow-sm shadow-emerald-500/10 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400">
+            <ArrowUp className="size-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Pengeluaran Bulan Ini */}
+      <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1.5 min-w-0">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              Pengeluaran Bulan Ini
+            </p>
+            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white truncate">
+              <AnimatedRupiah value={monthExpense} />
+            </p>
+          </div>
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-rose-200/80 bg-rose-50/80 text-rose-500 shadow-sm shadow-rose-500/10 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-400">
+            <ArrowUp className="size-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Arus Kas Bersih */}
+      <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1.5 min-w-0">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              Arus Kas Bersih
+            </p>
+            <p
+              className={cn(
+                "text-2xl sm:text-3xl font-extrabold tracking-tight truncate",
+                netCashFlow >= 0
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-rose-600 dark:text-rose-400"
+              )}
+            >
+              {formatSignedRupiah(netCashFlow, netCashFlow >= 0)}
+            </p>
+          </div>
+          <div
+            className={cn(
+              "flex size-12 shrink-0 items-center justify-center rounded-full border shadow-sm",
+              netCashFlow >= 0
+                ? "border-emerald-200/80 bg-emerald-50/80 text-emerald-600 shadow-emerald-500/10 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400"
+                : "border-rose-200/80 bg-rose-50/80 text-rose-500 shadow-rose-500/10 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-400"
+            )}
+          >
+            {netCashFlow >= 0 ? (
+              <TrendingUp className="size-5" />
+            ) : (
+              <ArrowDown className="size-5" />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
